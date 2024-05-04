@@ -1,0 +1,9 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "application-cluster"
+resolve_s3 = true
+s3_prefix = "application-cluster"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
+parameter_overrides = "ClusterName=\"projit-test-cluster\" FargateRequired=\"true\" FargateBase=1 FargateWeight=1 FargateSpotRequired=\"false\" FargateSpotBase=1 FargateSpotWeight=1"

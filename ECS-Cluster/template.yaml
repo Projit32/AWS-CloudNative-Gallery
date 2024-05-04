@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Fargate based  ECS Cluster to deploy applications
+
+Parameters:
+  ClusterName:
+    Type: String
+    Description: "Name of the cluster"
+
+  FargateRequired:
+    Type: String
+    AllowedValues:
+      - "true"
+      - "false"
+    Default: "true"
+    Description: "Condition for Fargate Capacity Provider, default is True"
+
+  FargateBase:
+    Type: Number
+    Default: 1
+    Description: "Base of Fargate Capacity"
+
+  FargateWeight:
+    Type: Number
+    Default: 1
+    Description: "Weight of Fargate Capacity"
+
+  FargateSpotRequired:
+    Type: String
+    AllowedValues:
+      - "true"
+      - "false"
+    Default: "false"
+    Description: "Condition for Fargate Spot Capacity Provider, default is True"
+
+  FargateSpotBase:
+    Type: Number
+    Default: 1
+    Description: "Base of Fargate Spot Capacity"
+
+  FargateSpotWeight:
+    Type: Number
+    Default: 1
+    Description: "Weight of Fargate Spot Capacity"
+
+Conditions:
+  FargateCapacityRequired: !Equals ["true", !Ref FargateRequired]
+  FargateSpotCapacityRequired: !Equals ["true", !Ref FargateSpotRequired]
+
+Resources:
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Ref ClusterName
+      CapacityProviders:
+        - !If
+          - FargateCapacityRequired
+          - FARGATE
+          - !Ref AWS::NoValue
+        - !If
+          - FargateSpotCapacityRequired
+          - FARGATE_SPOT
+          - !Ref AWS::NoValue
+      DefaultCapacityProviderStrategy:
+        - !If
+          - FargateCapacityRequired
+          - CapacityProvider: FARGATE
+            Weight: !Ref FargateWeight
+            Base: !Ref FargateBase
+          - !Ref AWS::NoValue
+        - !If
+          - FargateSpotCapacityRequired
+          - CapacityProvider: FARGATE_SPOT
+            Weight: !Ref FargateSpotWeight
+            Base: !Ref FargateSpotBase
+          - !Ref AWS::NoValue
+      Configuration:
+        ExecuteCommandConfiguration:
+          Logging: DEFAULT

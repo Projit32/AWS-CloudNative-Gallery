@@ -1,0 +1,127 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Fargate based ECS Task Definition to deploy applications in a single container
+
+Parameters:
+  AppName:
+    Type: String
+    Description: Name for Container and Task Family
+
+  ContainerImageURL:
+    Type: String
+    Description: Container Image URL
+
+  ContainerCPU:
+    Type: Number
+    Description: Container CPU Size
+    AllowedValues:
+      - 512
+      - 1024
+      - 2048
+      - 3076
+      - 4096
+
+  ContainerMemory:
+    Type: Number
+    Description: Container Memory Size
+    AllowedValues:
+      - 512
+      - 1024
+      - 2048
+      - 3076
+      - 4096
+
+  Port:
+    Type: Number
+    Description: Host Port Mapping
+    Default: 80
+
+  PortName:
+    Type: String
+    Description: Name of Port Mapping
+
+  Region:
+    Type: String
+    Description: Region for AWS logs
+
+  ReadonlyRootFilesystem:
+    Type: String
+    Description: Set read only access for root folder system
+    AllowedValues:
+      - true
+      - false
+
+  TaskCPU:
+    Type: String
+    Description: Amount of CPU needed for the task
+
+  TaskMemory:
+    Type: String
+    Description: Amount of memory needed for the task
+    AllowedValues:
+      - 0.5
+      - 1
+      - 2
+      - 4
+      - 6
+      - 8
+      - 16
+
+  TaskExecutionRoleARN:
+    Type: String
+    Description: IAM Role ARN for Task Execution
+
+  TaskRoleArn:
+    Type: String
+    Description: IAM for Task Containers
+    Default: ""
+
+Conditions:
+  IsTaskRoleRequired:  !Equals ["", !Ref TaskRoleArn]
+
+Resources:
+  ApplicationTaskDefinition:
+    Type: 'AWS::ECS::TaskDefinition'
+    Properties:
+      ContainerDefinitions:
+        - Name: !Sub ${AppName}-Container
+          Image: !Ref ContainerImageURL
+          Cpu: !Ref ContainerCPU
+          Memory: !Ref ContainerMemory
+          MemoryReservation: !Ref ContainerMemory
+          Essential: true
+          PortMappings:
+            - ContainerPort: !Ref Port
+              HostPort: !Ref Port
+              Protocol: tcp
+              AppProtocol: http
+              Name: flask
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-create-group: true
+              awslogs-group: !Sub /ecs/${AppName}-TD
+              awslogs-region: !Ref Region
+              awslogs-stream-prefix: ecs
+          ReadonlyRootFilesystem: !Ref ReadonlyRootFilesystem
+      Family: !Sub ${AppName}-TD
+      Cpu: !Sub ${TaskCPU} vCPU
+      Memory: !Sub ${TaskMemory} GB
+      ExecutionRoleArn: !Ref TaskExecutionRoleARN
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      TaskRoleArn: !If
+        - IsTaskRoleRequired
+        - !Ref TaskRoleArn
+        - !Ref AWS::NoValue
+
+
+
+Outputs:
+  ECSTaskDefinition:
+    Description: The created Task Definition.
+    Value: !Ref ApplicationTaskDefinition
