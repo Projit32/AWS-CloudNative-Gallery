@@ -3,125 +3,133 @@ Transform: AWS::Serverless-2016-10-31
 Description: Fargate based ECS Task Definition to deploy applications in a single container
 
 Parameters:
-  AppName:
+  StackName:
     Type: String
-    Description: Name for Container and Task Family
+    Description: Name for ALB Stack
 
-  ContainerImageURL:
+  VPCID:
     Type: String
-    Description: Container Image URL
-
-  ContainerCPU:
-    Type: Number
-    Description: Container CPU Size
-    AllowedValues:
-      - 512
-      - 1024
-      - 2048
-      - 3076
-      - 4096
-
-  ContainerMemory:
-    Type: Number
-    Description: Container Memory Size
-    AllowedValues:
-      - 512
-      - 1024
-      - 2048
-      - 3076
-      - 4096
-
-  Port:
-    Type: Number
-    Description: Host Port Mapping
-    Default: 80
-
-  PortName:
-    Type: String
-    Description: Name of Port Mapping
-
-  Region:
-    Type: String
-    Description: Region for AWS logs
-
-  ReadonlyRootFilesystem:
-    Type: String
-    Description: Set read only access for root folder system
-    AllowedValues:
-      - true
-      - false
-
-  TaskCPU:
-    Type: String
-    Description: Amount of CPU needed for the task
-
-  TaskMemory:
-    Type: String
-    Description: Amount of memory needed for the task
-    AllowedValues:
-      - 0.5
-      - 1
-      - 2
-      - 4
-      - 6
-      - 8
-      - 16
-
-  TaskExecutionRoleARN:
-    Type: String
-    Description: IAM Role ARN for Task Execution
-
-  TaskRoleArn:
-    Type: String
-    Description: IAM for Task Containers
+    Description: VPC ID in which ALB will be connected to
     Default: ""
 
+  Subnets:
+    Type: String
+    Description: Comma separated subnet IDs
+
+  RequestTimeOut:
+    Type: Number
+    Description: Timeout of the ALB requests
+    Default: 60
+
 Conditions:
-  IsTaskRoleRequired:  !Equals ["", !Ref TaskRoleArn]
+  IsVPCProvided:  !Not [!Equals ["", !Ref VPCID]]
 
 Resources:
-  ApplicationTaskDefinition:
-    Type: 'AWS::ECS::TaskDefinition'
+  ALBWebSG:
+    Type: AWS::EC2::SecurityGroup
     Properties:
-      ContainerDefinitions:
-        - Name: !Sub ${AppName}-Container
-          Image: !Ref ContainerImageURL
-          Cpu: !Ref ContainerCPU
-          Memory: !Ref ContainerMemory
-          MemoryReservation: !Ref ContainerMemory
-          Essential: true
-          PortMappings:
-            - ContainerPort: !Ref Port
-              HostPort: !Ref Port
-              Protocol: tcp
-              AppProtocol: http
-              Name: flask
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-create-group: true
-              awslogs-group: !Sub /ecs/${AppName}-TD
-              awslogs-region: !Ref Region
-              awslogs-stream-prefix: ecs
-          ReadonlyRootFilesystem: !Ref ReadonlyRootFilesystem
-      Family: !Sub ${AppName}-TD
-      Cpu: !Sub ${TaskCPU} vCPU
-      Memory: !Sub ${TaskMemory} GB
-      ExecutionRoleArn: !Ref TaskExecutionRoleARN
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      RuntimePlatform:
-        CpuArchitecture: X86_64
-        OperatingSystemFamily: LINUX
-      TaskRoleArn: !If
-        - IsTaskRoleRequired
-        - !Ref TaskRoleArn
+      GroupDescription: Allow users to connect to the ALB
+      GroupName: !Sub ${StackName}-ALB-SG
+      VpcId: !If
+        - IsVPCProvided
+        - !Ref VPCID
         - !Ref AWS::NoValue
+      SecurityGroupIngress:
+        # FOR Spring HTTP Requests
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        # FOR ExpressJS HTTP Requests
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+        # FOR Flask HTTP Requests
+        - IpProtocol: tcp
+          FromPort: 5000
+          ToPort: 5000
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
 
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      IpAddressType: ipv4
+      Name: !Sub ${StackName}-ALB
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref ALBWebSG
+      Subnets: !Split [ ",", !Ref Subnets]
+      Type: application
+      LoadBalancerAttributes:
+        - Key: routing.http.preserve_host_header.enabled
+          Value: true
+        - Key: routing.http.xff_client_port.enabled
+          Value: true
+        - Key: routing.http.xff_header_processing.mode
+          Value: append
+        - Key: idle_timeout.timeout_seconds
+          Value: !Ref RequestTimeOut
 
+  Port80Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: "HTTP"
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            ContentType: application/json
+            MessageBody: "{\"HTTPCode\": 503, \"Message\":\"Service Unavailable\"}"
+            StatusCode: 503
+
+  Port3000Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 3000
+      Protocol: "HTTP"
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            ContentType: application/json
+            MessageBody: "{\"HTTPCode\": 503, \"Message\":\"Service Unavailable\"}"
+            StatusCode: 503
+
+  Port5000Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 5000
+      Protocol: "HTTP"
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            ContentType: application/json
+            MessageBody: "{\"HTTPCode\": 503, \"Message\":\"Service Unavailable\"}"
+            StatusCode: 503
 
 Outputs:
-  ECSTaskDefinition:
-    Description: The created Task Definition.
-    Value: !Ref ApplicationTaskDefinition
+  Port80ListenerARN:
+    Description: ARN of port 80
+    Value: !Ref Port80Listener
+    Export:
+      Name: !Sub ${StackName}-ALB-Listener-Port80
+
+  Port3000ListenerARN:
+    Description: ARN of port 3000
+    Value: !Ref Port3000Listener
+    Export:
+      Name: !Sub ${StackName}-ALB-Listener-Port3000
+
+  Port5000ListenerARN:
+    Description: ARN of port 3000
+    Value: !Ref Port5000Listener
+    Export:
+      Name: !Sub ${StackName}-ALB-Listener-Port5000
