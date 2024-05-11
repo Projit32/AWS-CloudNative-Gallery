@@ -1,0 +1,156 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Fargate based  ECS Cluster to deploy applications
+
+Parameters:
+  AppName:
+    Type: String
+    Description: "Name of the Service stack"
+
+  IngressPort:
+    Type: Number
+    Description: Port number of the container
+
+  ContainerName:
+    Type: String
+    Description: "Name of the container to be hosted in ALB"
+
+  ALBStackName:
+    Type: String
+    Description: "Name of the ALB stack to import values"
+
+  ClusterName:
+    Type: String
+    Description: "Name of the cluster"
+
+  VPCID:
+    Type: String
+    Description: VPC ID in which ALB will be connected to
+    Default: ""
+
+  Subnets:
+    Type: String
+    Description: Comma separated subnet IDs
+
+  ServicePathPattern:
+    Type: String
+    Description: Path pattern for forward rule in ALB
+
+  ServiceDesiredCount:
+    Type: Number
+    Description: Desired Count of the service
+    Default: 1
+
+  DCMaxPercent:
+    Type: Number
+    Description: Max percentage of desired count that is allowed during rolling deployment
+    Default: 200
+
+  DCMinPercent:
+    Type: Number
+    Description: Max percentage of desired count that needs to be healthy during rolling deployment
+    Default: 100
+
+  HealthCheckGracePeriodSeconds:
+    Type: Number
+    Description: Grace period in seconds before health check starts by ALB
+    Default: 60
+
+  TaskDefinationName:
+    Type: String
+    Description: Name of the task
+
+  TaskDefinationRevision:
+    Type: String
+    Description: Revision of the task
+
+  Priority:
+    Type: Number
+    Description: Priority of Listener Rule in ALB
+
+Conditions:
+  IsVPCProvided:  !Not [!Equals ["", !Ref VPCID]]
+
+Resources:
+  ServiceSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow users to connect to the ALB
+      GroupName: !Sub ${AppName}-Service-SG
+      VpcId: !If
+        - IsVPCProvided
+        - !Ref VPCID
+        - !Ref AWS::NoValue
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref IngressPort
+          ToPort: !Ref IngressPort
+          SourceSecurityGroupId:
+            Fn::ImportValue: !Sub ${ALBStackName}-ALB-SG
+
+  ApplicationService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ClusterName
+      ServiceName: !Sub ${AppName}-Service
+      DesiredCount: !Ref ServiceDesiredCount
+      LaunchType: FARGATE
+      DeploymentConfiguration:
+        MaximumPercent: !Ref DCMaxPercent
+        MinimumHealthyPercent: !Ref DCMinPercent
+      DeploymentController:
+        Type: ECS
+      HealthCheckGracePeriodSeconds: !Ref HealthCheckGracePeriodSeconds
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref ServiceSG
+          Subnets: !Split [",", !Ref Subnets]
+      LoadBalancers:
+        - ContainerName: !Ref ContainerName
+          ContainerPort: !Ref IngressPort
+          TargetGroupArn: !Ref ServiceTargetGroup
+      SchedulingStrategy: REPLICA
+      TaskDefinition: !Sub ${TaskDefinationName}:${TaskDefinationRevision}
+      PlatformVersion: LATEST
+
+  ServiceTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /healthCheck
+      HealthCheckPort: !Ref IngressPort
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 6
+      HealthyThresholdCount: 3
+      IpAddressType: ipv4
+      Matcher:
+        HttpCode: 200-499
+      Name: !Sub ${AppName}-TargetGroup
+      Port: !Ref IngressPort
+      Protocol: HTTP
+      ProtocolVersion: HTTP1
+      TargetType: ip
+      UnhealthyThresholdCount: 5
+      VpcId: !Ref VPCID
+
+  ServiceListener:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          ForwardConfig:
+            TargetGroups:
+              - TargetGroupArn: !Ref ServiceTargetGroup
+                Weight: 100
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
+            Values:
+              - !Ref ServicePathPattern
+      ListenerArn:
+        Fn::ImportValue: !Sub ${ALBStackName}-ALB-Listener-Port${IngressPort}
+      Priority: !Ref Priority
+

@@ -133,3 +133,9 @@ Outputs:
     Value: !Ref Port5000Listener
     Export:
       Name: !Sub ${StackName}-ALB-Listener-Port5000
+
+  ALBSGARN:
+    Description: ARN of ALB Security Group
+    Value: !Ref ALBWebSG
+    Export:
+      Name: !Sub ${StackName}-ALB-SG
