@@ -67,21 +67,54 @@ Parameters:
       - 8
       - 16
 
-  TaskExecutionRoleARN:
-    Type: String
-    Description: IAM Role ARN for Task Execution
-
-  TaskRoleArn:
-    Type: String
-    Description: IAM for Task Containers
-    Default: ""
-
-Conditions:
-  IsTaskRoleRequired:  !Equals ["", !Ref TaskRoleArn]
+  ECSLogRetentionDays:
+    Type: Number
+    Description: ECS Task Log Retention Days
+    Default: 7
+    AllowedValues:
+      - 1
+      - 3
+      - 5
+      - 7
+      - 14
+      - 30
+      - 60
 
 Resources:
+  TaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      RoleName: !Sub ${AppName}-ECS-TaskExecutionRole
+      Policies:
+        - PolicyName: LogAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+
+  CloudwatchLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      LogGroupName: !Sub '/ecs/${AppName}-TD'
+      LogGroupClass: INFREQUENT_ACCESS
+      RetentionInDays: !Ref ECSLogRetentionDays
+
   ApplicationTaskDefinition:
     Type: 'AWS::ECS::TaskDefinition'
+    DependsOn: CloudwatchLogGroup
     Properties:
       ContainerDefinitions:
         - Name: !Sub ${AppName}-Container
@@ -99,25 +132,21 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-create-group: true
-              awslogs-group: !Sub /ecs/${AppName}-TD
+              awslogs-group: !Ref CloudwatchLogGroup
               awslogs-region: !Ref Region
-              awslogs-stream-prefix: ecs
+              awslogs-stream-prefix: !Sub ${AppName}
           ReadonlyRootFilesystem: !Ref ReadonlyRootFilesystem
       Family: !Sub ${AppName}-TD
       Cpu: !Sub ${TaskCPU} vCPU
       Memory: !Sub ${TaskMemory} GB
-      ExecutionRoleArn: !Ref TaskExecutionRoleARN
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
       RuntimePlatform:
         CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
-      TaskRoleArn: !If
-        - IsTaskRoleRequired
-        - !Ref TaskRoleArn
-        - !Ref AWS::NoValue
+      TaskRoleArn: !Ref AWS::NoValue
 
 
 
