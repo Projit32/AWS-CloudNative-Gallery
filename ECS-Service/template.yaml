@@ -56,6 +56,16 @@ Parameters:
     Description: Grace period in seconds before health check starts by ALB
     Default: 60
 
+  HealthCheckPath:
+    Type: String
+    Description: Health check path for Container
+    Default: "/"
+
+  HttpCodes:
+    Type: String
+    Description: Health check Http success codes
+    Default: 200
+
   TaskDefinationName:
     Type: String
     Description: Name of the task
@@ -120,14 +130,14 @@ Resources:
     Properties:
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: 10
-      HealthCheckPath: /healthCheck
+      HealthCheckPath: !Ref HealthCheckPath
       HealthCheckPort: !Ref IngressPort
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 6
       HealthyThresholdCount: 3
       IpAddressType: ipv4
       Matcher:
-        HttpCode: 200-499
+        HttpCode: !Ref HttpCodes
       Name: !Sub ${AppName}-TargetGroup
       Port: !Ref IngressPort
       Protocol: HTTP

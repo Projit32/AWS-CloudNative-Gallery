@@ -6,4 +6,4 @@ s3_prefix = "gallery-application-service"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM"
-parameter_overrides = "ClusterName=\"projit-test-cluster\" AppName=\"projit-test-service\" IngressPort=5000 ContainerName=\"aws-gallery-Container\" ALBStackName=\"Application\" VPCID=\"vpc-0ba8dc166b641aa2b\" Subnets=\"subnet-05827c47b9a6e2a13,subnet-0dd2c88b406bab802,subnet-0903609d518d0e524,subnet-07b372d00b58284c5,subnet-004ae6f38caf005ef,subnet-07fb8af33aafd34ae\" ServicePathPattern=\"/app/*\" TaskDefinationName=\"aws-gallery-TD\" TaskDefinationRevision=\"2\" Priority=1"
+parameter_overrides = "ClusterName=\"projit-test-cluster\" AppName=\"projit-test-service\" IngressPort=5000 ContainerName=\"aws-gallery-Container\" ALBStackName=\"Application\" VPCID=\"vpc-0ba8dc166b641aa2b\" Subnets=\"subnet-05827c47b9a6e2a13,subnet-0dd2c88b406bab802,subnet-0903609d518d0e524,subnet-07b372d00b58284c5,subnet-004ae6f38caf005ef,subnet-07fb8af33aafd34ae\" ServicePathPattern=\"/app/*\" TaskDefinationName=\"aws-gallery-TD\" TaskDefinationRevision=\"2\" Priority=1 HealthCheckPath=\"/healthCheck\" HttpCodes=\"200-499\""
