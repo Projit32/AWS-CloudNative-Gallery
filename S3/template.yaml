@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
-Description: Fargate based ECS Task Definition to deploy applications in a single container
+Description: S3 Bucket for application
 
 Parameters:
   BucketName:
