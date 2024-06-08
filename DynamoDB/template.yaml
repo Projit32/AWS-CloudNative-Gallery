@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Fargate based ECS Task Definition to deploy applications in a single container
+
+Parameters:
+  MultimediaDBTableName:
+    Type: String
+    Description: Name of the bucket
+
+Resources:
+  MultimediaDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        -
+          AttributeName: "imageName"
+          AttributeType: "S"
+        -
+          AttributeName: "pictureTimestamp"
+          AttributeType: "S"
+        -
+          AttributeName: "userName"
+          AttributeType: "S"
+      KeySchema:
+        -
+          AttributeName: "userName"
+          KeyType: "HASH"
+        -
+          AttributeName: "imageName"
+          KeyType: "RANGE"
+      TableName: !Ref MultimediaDBTableName
+      LocalSecondaryIndexes:
+        -
+          IndexName: "PictureTimeStampLSI"
+          KeySchema:
+            -
+              AttributeName: "userName"
+              KeyType: "HASH"
+            -
+              AttributeName: "pictureTimestamp"
+              KeyType: "RANGE"
+          Projection:
+            ProjectionType: "ALL"
