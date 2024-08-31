@@ -12,7 +12,7 @@ Resources:
     Type: 'AWS::S3::Bucket'
     DeletionPolicy: Retain
     Properties:
-      BucketName: !Sub ${BucketName}-${AWS::Region}-${AWS::AccountId}4
+      BucketName: !Sub ${BucketName}-${AWS::Region}-${AWS::AccountId}
 
 Outputs:
   S3BucketName:
