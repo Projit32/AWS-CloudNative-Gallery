@@ -5,7 +5,7 @@ Description: Cognito User-pool for application
 Parameters:
   PoolName:
     Type: String
-    Description: Name of the bucket
+    Description: Name of the pool
   ClientName:
     Type: String
     Description: Name of the Client App Integration
