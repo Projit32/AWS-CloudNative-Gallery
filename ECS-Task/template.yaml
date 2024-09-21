@@ -54,6 +54,15 @@ Parameters:
   TaskCPU:
     Type: String
     Description: Amount of CPU needed for the task
+    AllowedValues:
+      - .25
+      - .5
+      - 1
+      - 2
+      - 4
+      - 6
+      - 8
+      - 16
 
   TaskMemory:
     Type: String
@@ -109,12 +118,12 @@ Resources:
     Type: 'AWS::Logs::LogGroup'
     Properties:
       LogGroupName: !Sub '/ecs/${AppName}-TD'
-      LogGroupClass: INFREQUENT_ACCESS
       RetentionInDays: !Ref ECSLogRetentionDays
 
   ApplicationTaskDefinition:
     Type: 'AWS::ECS::TaskDefinition'
     DependsOn: CloudwatchLogGroup
+    DeletionPolicy: Retain
     Properties:
       ContainerDefinitions:
         - Name: !Sub ${AppName}-Container
@@ -128,7 +137,7 @@ Resources:
               HostPort: !Ref Port
               Protocol: tcp
               AppProtocol: http
-              Name: flask
+              Name: !Ref PortName
           LogConfiguration:
             LogDriver: awslogs
             Options:
