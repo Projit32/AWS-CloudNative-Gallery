@@ -97,6 +97,11 @@ Resources:
           ToPort: !Ref IngressPort
           SourceSecurityGroupId:
             Fn::ImportValue: !Sub ${ALBStackName}-ALB-SG
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
 
   ApplicationService:
     Type: AWS::ECS::Service

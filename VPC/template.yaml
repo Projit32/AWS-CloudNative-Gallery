@@ -51,12 +51,21 @@ Parameters:
       - "false"
     Default: "false"
 
+  NatGatewayRequired:
+    Type: String
+    Description: Nat Gateway Required
+    AllowedValues:
+      - "true"
+      - "false"
+    Default: "true"
+
 Conditions:
   2ndSubnetRequired: !Equals ["true", !Ref Subnet2Required]
   3rdSubnetRequired: !Equals ["true", !Ref Subnet3Required]
   4thSubnetRequired: !Equals ["true", !Ref Subnet4Required]
   5thSubnetRequired: !Equals ["true", !Ref Subnet5Required]
   6thSubnetRequired: !Equals ["true", !Ref Subnet6Required]
+  NatGWNeeded: !Equals ["true", !Ref NatGatewayRequired]
 
 Resources:
   ## VPC
@@ -68,7 +77,7 @@ Resources:
       CidrBlock: 10.0.0.0/16
       Tags:
         - Key : Name
-          Value: !Ref VPCName
+          Value: !Sub ${VPCName}-VPC
 
   ## SUBNETS
   PublicSubnet1:
@@ -246,6 +255,7 @@ Resources:
   NatGateway:
     Type: AWS::EC2::NatGateway
     DependsOn: NatPublicIP
+    Condition: NatGWNeeded
     Properties:
       SubnetId: !Ref PublicSubnet1
       AllocationId: !GetAtt NatPublicIP.AllocationId
@@ -254,6 +264,7 @@ Resources:
   NatPublicIP:
     Type: AWS::EC2::EIP
     DependsOn: PubPrivateVPC
+    Condition: NatGWNeeded
     Properties:
       Domain: vpc
 
@@ -265,6 +276,7 @@ Resources:
 
   PrivateRoute:
     Type: AWS::EC2::Route
+    Condition: NatGWNeeded
     Properties:
       NatGatewayId: !Ref NatGateway
       RouteTableId: !Ref PrivateRouteTable
@@ -310,3 +322,35 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnet6
       RouteTableId: !Ref PrivateRouteTable
+
+  VPCEndpointSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow users to connect to the ALB
+      GroupName: !Sub ${VPCName}-VPC-Endpoint-SG
+      VpcId: !Ref PubPrivateVPC
+
+  VPCEndpointConsumerSG:
+    DependsOn: VPCEndpointSG
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow users to connect to the ALB
+      GroupName: !Sub ${VPCName}-VPC-Endpoint-Consumer-SG
+      VpcId: !Ref PubPrivateVPC
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          DestinationSecurityGroupId: !Ref VPCEndpointSG
+
+  VPCEndpointIngressRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: VPCEndpointConsumerSG
+    Properties:
+      Description: Allowing consumer Security Group to connect to VPC Endpoint
+      FromPort: -1
+      GroupId: !GetAtt VPCEndpointSG.GroupId
+      IpProtocol: -1
+      SourceSecurityGroupId: !GetAtt VPCEndpointConsumerSG.GroupId
+      ToPort: -1
+

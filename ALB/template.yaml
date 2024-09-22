@@ -16,6 +16,11 @@ Parameters:
     Type: String
     Description: Comma separated subnet IDs
 
+  VPCEndpointSG:
+    Type: String
+    Description: Timeout of the ALB requests
+    Default: 60
+
   RequestTimeOut:
     Type: Number
     Description: Timeout of the ALB requests
