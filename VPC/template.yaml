@@ -201,6 +201,9 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref PubPrivateVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${VPCName}-VPC-Public-Route
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -273,6 +276,9 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref PubPrivateVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${VPCName}-VPC-Private-Route
 
   PrivateRoute:
     Type: AWS::EC2::Route

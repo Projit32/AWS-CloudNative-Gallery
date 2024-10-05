@@ -124,7 +124,7 @@ Resources:
       HealthCheckGracePeriodSeconds: !Ref HealthCheckGracePeriodSeconds
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref ServiceSG
             - !If

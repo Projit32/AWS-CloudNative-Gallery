@@ -54,15 +54,6 @@ Parameters:
   TaskCPU:
     Type: String
     Description: Amount of CPU needed for the task
-    AllowedValues:
-      - .25
-      - .5
-      - 1
-      - 2
-      - 4
-      - 6
-      - 8
-      - 16
 
   TaskMemory:
     Type: String
