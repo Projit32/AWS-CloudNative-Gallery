@@ -91,7 +91,7 @@ Parameters:
 Conditions:
   IsVPCProvided:  !Not [!Equals ["", !Ref VPCID]]
   IsVPCEndpointSGProvided: !Not [!Equals ["", !Ref VPCEndpointSG]]
-  IsStickynessRequired: !Not [!Equals ["", !Ref SessionCookieName]]
+  IsStickinessRequired: !Not [!Equals ["", !Ref SessionCookieName]]
 
 Resources:
   ServiceSG:
@@ -167,16 +167,17 @@ Resources:
       UnhealthyThresholdCount: 5
       VpcId: !Ref VPCID
       TargetGroupAttributes:
-        - If IsStickynessRequired
-        - - Key: stickiness.enabled
-            Value: true
-          - Key: stickiness.type
-            Value: app_cookie
-          - Key: stickiness.app_cookie.duration_seconds
-            Value: 10
-          - Key: stickiness.app_cookie.cookie_name
-            Value: !Ref SessionCookieName
-        - !Ref AWS::NoValue
+        !If
+          - IsStickinessRequired
+          - - Key: stickiness.enabled
+              Value: true
+            - Key: stickiness.type
+              Value: app_cookie
+            - Key: stickiness.app_cookie.duration_seconds
+              Value: 3600
+            - Key: stickiness.app_cookie.cookie_name
+              Value: !Ref SessionCookieName
+          - !Ref AWS::NoValue
 
   ServiceListener:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule

@@ -123,6 +123,9 @@ Resources:
           Memory: !Ref ContainerMemory
           MemoryReservation: !Ref ContainerMemory
           Essential: true
+          Environment:
+            - Name: PORT
+              Value: !Ref Port
           PortMappings:
             - ContainerPort: !Ref Port
               HostPort: !Ref Port
