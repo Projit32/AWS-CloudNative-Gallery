@@ -34,8 +34,15 @@ Parameters:
       - internet-facing
       - internal
 
+  SSLCertificateARN:
+    Type: String
+    Description: ARN of SSL certificate
+    Default: ""
+
 Conditions:
   IsVPCProvided:  !Not [!Equals ["", !Ref VPCID]]
+  IsPublic: !Equals ["internet-facing", !Ref ALBType]
+  IsPrivate: !Not [Condition: IsPublic]
 
 Resources:
   ALBWebSG:
@@ -48,21 +55,32 @@ Resources:
         - !Ref VPCID
         - !Ref AWS::NoValue
       SecurityGroupIngress:
-        # FOR Spring HTTP Requests
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
-        # FOR ExpressJS HTTP Requests
-        - IpProtocol: tcp
-          FromPort: 3000
-          ToPort: 3000
-          CidrIp: 0.0.0.0/0
-        # FOR Flask HTTP Requests
-        - IpProtocol: tcp
-          FromPort: 5000
-          ToPort: 5000
-          CidrIp: 0.0.0.0/0
+        - !If
+          - IsPublic
+          - IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+            CidrIp: 0.0.0.0/0
+          - !Ref AWS::NoValue
+        - !If
+          - IsPrivate
+          - IpProtocol: tcp
+            FromPort: 3000
+            ToPort: 3000
+            CidrIp: 0.0.0.0/0
+          - !Ref AWS::NoValue
+        - !If
+          - IsPrivate
+          - IpProtocol: tcp
+            FromPort: 5000
+            ToPort: 5000
+            CidrIp: 0.0.0.0/0
+          - !Ref AWS::NoValue
+
       SecurityGroupEgress:
         - IpProtocol: -1
           FromPort: -1
@@ -89,12 +107,15 @@ Resources:
         - Key: idle_timeout.timeout_seconds
           Value: !Ref RequestTimeOut
 
-  Port80Listener:
+  Port443Listener:
+    Condition: IsPublic
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       LoadBalancerArn: !Ref ApplicationLoadBalancer
-      Port: 80
-      Protocol: "HTTP"
+      Port: 443
+      Protocol: "HTTPS"
+      Certificates:
+        - !Ref SSLCertificateARN
       DefaultActions:
         - Type: fixed-response
           FixedResponseConfig:
@@ -102,7 +123,31 @@ Resources:
             MessageBody: "{\"HTTPCode\": 503, \"Message\":\"Service Unavailable\"}"
             StatusCode: 503
 
+  Port80Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: "HTTP"
+      DefaultActions:
+        - !If
+          - IsPublic
+          - Type: redirect
+            RedirectConfig:
+              Host: '#{host}'
+              Path: '/#{path}'
+              Port: '443'
+              Query: '#{query}'
+              Protocol: HTTPS
+              StatusCode: HTTP_301
+          - Type: fixed-response
+            FixedResponseConfig:
+              ContentType: application/json
+              MessageBody: "{\"HTTPCode\": 503, \"Message\":\"Service Unavailable\"}"
+              StatusCode: 503
+
   Port3000Listener:
+    Condition: IsPrivate
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       LoadBalancerArn: !Ref ApplicationLoadBalancer
@@ -116,6 +161,7 @@ Resources:
             StatusCode: 503
 
   Port5000Listener:
+    Condition: IsPrivate
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       LoadBalancerArn: !Ref ApplicationLoadBalancer
@@ -129,20 +175,30 @@ Resources:
             StatusCode: 503
 
 Outputs:
+  Port443ListenerARN:
+    Condition: IsPublic
+    Description: ARN of port 3000
+    Value: !Ref Port443Listener
+    Export:
+      Name: !Sub ${StackName}-ALB-Listener-Port443
+
   Port80ListenerARN:
+    Condition: IsPrivate
     Description: ARN of port 80
     Value: !Ref Port80Listener
     Export:
       Name: !Sub ${StackName}-ALB-Listener-Port80
 
   Port3000ListenerARN:
+    Condition: IsPrivate
     Description: ARN of port 3000
     Value: !Ref Port3000Listener
     Export:
       Name: !Sub ${StackName}-ALB-Listener-Port3000
 
   Port5000ListenerARN:
-    Description: ARN of port 3000
+    Condition: IsPrivate
+    Description: ARN of port 5000
     Value: !Ref Port5000Listener
     Export:
       Name: !Sub ${StackName}-ALB-Listener-Port5000

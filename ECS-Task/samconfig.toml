@@ -6,5 +6,5 @@ s3_prefix = "gallery-application-task-def"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM"
-parameter_overrides = "AppName=\"aws-gallery\" ContainerImageURL=\"projit32/aws-gallery-application:latest\" ContainerCPU=\"512\" ContainerMemory=\"1024\" Port=\"5000\" PortName=\"flaskapp\" Region=\"us-east-1\" ReadonlyRootFilesystem=\"true\" TaskCPU=\".5\" TaskMemory=\"1\" ECSLogRetentionDays=7"
+parameter_overrides = "AppName=\"aws-gallery\" ContainerImageURL=\"projit32/aws-gallery-application:latest\" ContainerCPU=\"512\" ContainerMemory=\"1024\" Port=\"80\" PortName=\"flaskapp\" Region=\"us-east-1\" ReadonlyRootFilesystem=\"true\" TaskCPU=\".5\" TaskMemory=\"1\" ECSLogRetentionDays=7"
 image_repositories = []

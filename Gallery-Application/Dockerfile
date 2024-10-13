@@ -6,4 +6,6 @@ COPY . .
 
 RUN pip install -r requirements.txt
 
+ENV PORT=5000
+
 ENTRYPOINT ["python", "app.py"]

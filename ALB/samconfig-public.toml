@@ -6,5 +6,5 @@ s3_prefix = "application-ALB-public"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
-parameter_overrides = "StackName=\"Application-Public\" \"ALBType\"=\"internet-facing\" VPCID=\"vpc-0acbeb1e2e182ff4e\" Subnets=\"subnet-0402373082f530ce9,subnet-016a28cbd590cf438,subnet-0e58380e648683333,subnet-0f8e8c86747c4474d,subnet-093cfcb970cd175f4,subnet-0443f0db23a09eb24\" RequestTimeOut=\"60\""
+parameter_overrides = "StackName=\"Application-Public\" \"ALBType\"=\"internet-facing\" VPCID=\"vpc-0acbeb1e2e182ff4e\" Subnets=\"subnet-0402373082f530ce9,subnet-016a28cbd590cf438,subnet-0e58380e648683333,subnet-0f8e8c86747c4474d,subnet-093cfcb970cd175f4,subnet-0443f0db23a09eb24\" RequestTimeOut=\"60\" SSLCertificateARN=\" arn:aws:acm:us-east-1:704678691702:certificate/f34b49a3-fcbe-44c9-a330-e0f2e5d010c0\""
 
