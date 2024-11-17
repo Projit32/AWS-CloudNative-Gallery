@@ -22,8 +22,11 @@ Resources:
         RecoveryMechanisms:
           - Name: verified_email
             Priority: 1
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
       AliasAttributes:
         - email
+        - preferred_username
       DeletionProtection: ACTIVE
       EmailConfiguration:
         EmailSendingAccount: COGNITO_DEFAULT
@@ -43,6 +46,13 @@ Resources:
           AttributeDataType: String
           Mutable: true
           Required: true
+        - Name: preferred_username
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+          StringAttributeConstraints:
+            MinLength: 1
+            MaxLength: 50
       UserAttributeUpdateSettings:
         AttributesRequireVerificationBeforeUpdate:
           - email
@@ -51,14 +61,12 @@ Resources:
     Type: AWS::Cognito::UserPoolClient
     Properties:
       AccessTokenValidity: 1
-      AllowedOAuthFlows:
-        - client_credentials
-        - implicit
-      AllowedOAuthFlowsUserPoolClient: true
-      AllowedOAuthScopes:
-        - email
-        - phone
       AuthSessionValidity: 3
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: days
+        IdToken: days
+        RefreshToken: days
       ClientName: !Ref ClientName
       EnableTokenRevocation: true
       ExplicitAuthFlows:
@@ -73,14 +81,11 @@ Resources:
         - phone_number
         - phone_number_verified
         - email_verified
-      RefreshTokenValidity: 30
+        - preferred_username
       SupportedIdentityProviders:
         - COGNITO
-      TokenValidityUnits:
-        AccessToken: hours
-        IdToken: hours
-        RefreshToken: days
       UserPoolId: !Ref CognitoUserPool
       WriteAttributes:
         - email
         - phone_number
+        - preferred_username
