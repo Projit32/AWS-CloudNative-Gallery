@@ -5,9 +5,9 @@ import hashlib
 import base64
 import json
 
-USER_POOL_ID = 'us-east-1_CtbLVsAjp'
-CLIENT_ID = 'pmaviq1braam9pdf8eqksmprj'
-CLIENT_SECRET = '1povm90i06r5018f268kk0u94abdtnnv5olpb06q9ki2ne1p3co6'
+USER_POOL_ID = ''
+CLIENT_ID = ''
+CLIENT_SECRET = ''
 
 client = boto3.client('cognito-idp')
 
@@ -260,9 +260,30 @@ def logout(event):
         ClientSecret=CLIENT_SECRET
     )
 
+def refresh_login(event):
+    secret_hash = get_secret_hash(event["username"])
+    try:
+        resp = client.admin_initiate_auth(
+            UserPoolId=USER_POOL_ID,
+            ClientId=CLIENT_ID,
+            AuthFlow='REFRESH_TOKEN_AUTH',
+            AuthParameters={
+                'REFRESH_TOKEN': event["RefreshToken"],
+                'SECRET_HASH': secret_hash,
+            })
+    except client.exceptions.NotAuthorizedException as e:
+        print(e)
+        return None, "The username or password is incorrect"
+    except client.exceptions.UserNotConfirmedException:
+        return None, "User is not confirmed"
+    except Exception as e:
+        return None, e.__str__()
+    return resp, None
+
 if __name__ == "__main__":
-    #print(sign_up({"username":"projit32", "email":"@gmail.com", "password":""}))
-    #print(confirm_signup({"username":"projit32", "code": "606050"}))
-    #print(login({"username":"@gmail.com", "password":"Agentppp@32"}))
-    #print(get_user({"AccessToken":""}))
-    print(logout({"RefreshToken": ""}))
+     print(sign_up({"username":"", "email":"@gmail.com", "password":""}))
+    # print(confirm_signup({"username":"", "code": ""}))
+    # print(login({"username":"@gmail.com", "password":""}))
+    # print(get_user({"AccessToken":""}))
+    # print(logout({"RefreshToken": ""}))
+    # print(refresh_login({"username":"","RefreshToken": ""}))
