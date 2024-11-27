@@ -23,7 +23,7 @@ Resources:
           - Name: verified_email
             Priority: 1
       AdminCreateUserConfig:
-        AllowAdminCreateUserOnly: true
+        AllowAdminCreateUserOnly: false
       AliasAttributes:
         - email
         - preferred_username
@@ -49,13 +49,15 @@ Resources:
         - Name: preferred_username
           AttributeDataType: String
           Mutable: true
-          Required: true
+          Required: false
           StringAttributeConstraints:
             MinLength: 1
             MaxLength: 50
       UserAttributeUpdateSettings:
         AttributesRequireVerificationBeforeUpdate:
           - email
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_CODE
 
   AppClient:
     Type: AWS::Cognito::UserPoolClient
@@ -73,6 +75,8 @@ Resources:
         - ALLOW_REFRESH_TOKEN_AUTH
         - ALLOW_CUSTOM_AUTH
         - ALLOW_ADMIN_USER_PASSWORD_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_USER_SRP_AUTH
       GenerateSecret: true
       IdTokenValidity: 1
       PreventUserExistenceErrors: ENABLED
