@@ -1,15 +1,19 @@
+import traceback
+
 import boto3
 import botocore.exceptions
 import hmac
 import hashlib
 import base64
 import json
+from APIRegistry import ApiRouteRegistry
 
 USER_POOL_ID = ''
 CLIENT_ID = ''
 CLIENT_SECRET = ''
-
 client = boto3.client('cognito-idp')
+router = ApiRouteRegistry()
+
 
 def get_secret_hash(username):
     msg = username + CLIENT_ID
@@ -18,8 +22,8 @@ def get_secret_hash(username):
     d2 = base64.b64encode(dig).decode()
     return d2
 
-
-def sign_up(event):
+@router.register_route(methods=["POST"], path="/users/sign-up")
+def sign_up(event, request):
     for field in ["username", "email", "password",]:
         if not event.get(field):
             return {"error": False, "success": True, 'message': f"{field} is not present", "data": None}
@@ -71,7 +75,8 @@ def sign_up(event):
                         check Email for validation code",
             "data": None}
 
-def confirm_signup(event):
+@router.register_route(methods=["POST"], path="/users/confirm-sign-up")
+def confirm_signup(event, request):
     
     try:
         username = event['username']
@@ -97,7 +102,8 @@ def confirm_signup(event):
 
     return event
 
-def resend_verification(event):
+@router.register_route(methods=["POST"], path="/users/resend-verification-code")
+def resend_verification(event, request):
     
     try:
         username = event['username']
@@ -117,7 +123,8 @@ def resend_verification(event):
 
     return {"error": False, "success": True}
 
-def forgot_password(event):
+@router.register_route(methods=["POST"], path="/users/forgot-password")
+def forgot_password(event, request):
     
     try:
         username = event['username']
@@ -163,7 +170,8 @@ def forgot_password(event):
         "message": f"Please check your Registered email id for validation code",
         "data": None}
 
-def confirm_forgot_password(event):
+@router.register_route(methods=["POST"], path="/users/confirm-forgot-password")
+def confirm_forgot_password(event, request):
     
     try:
         username = event['username']
@@ -205,7 +213,7 @@ def confirm_forgot_password(event):
             "message": f"Password has been changed successfully",
             "data": None}
 
-
+@router.register_route(methods=["POST"], path="/users/initiate-auth")
 def initiate_auth(client, username, password):
     secret_hash = get_secret_hash(username)
     try:
@@ -226,8 +234,8 @@ def initiate_auth(client, username, password):
         return None, e.__str__()
     return resp, None
 
-
-def login(event):
+@router.register_route(methods=["POST"], path="/users/login")
+def login(event, request):
     
     for field in ["username", "password"]:
         if event.get(field) is None:
@@ -250,17 +258,20 @@ def login(event):
                 "success": False,
                 "data": None, "message": None}
 
-def get_user(event):
+
+@router.register_route(methods=["POST"], path="/users/forgot")
+def get_user(event, request):
     return client.get_user(AccessToken=event["AccessToken"])
 
-def logout(event):
+def logout(event, request):
     return client.revoke_token(
         Token=event["RefreshToken"],
         ClientId=CLIENT_ID,
         ClientSecret=CLIENT_SECRET
     )
 
-def refresh_login(event):
+@router.register_route(methods=["POST"], path="/users/refresh-token")
+def refresh_login(event, request):
     secret_hash = get_secret_hash(event["username"])
     try:
         resp = client.admin_initiate_auth(
@@ -281,9 +292,14 @@ def refresh_login(event):
     return resp, None
 
 if __name__ == "__main__":
-     print(sign_up({"username":"", "email":"@gmail.com", "password":""}))
+    print(router.routes)
+    #print(sign_up({"username":"", "email":"@gmail.com", "password":""}))
     # print(confirm_signup({"username":"", "code": ""}))
     # print(login({"username":"@gmail.com", "password":""}))
     # print(get_user({"AccessToken":""}))
     # print(logout({"RefreshToken": ""}))
     # print(refresh_login({"username":"","RefreshToken": ""}))
+
+
+def handle_request(event, context):
+    return router.serve(event, context)
