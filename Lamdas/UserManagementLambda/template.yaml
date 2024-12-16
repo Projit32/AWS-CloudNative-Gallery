@@ -2,64 +2,128 @@ AWSTemplateFormatVersion : '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
 Parameters:
+  Priority:
+    Type: String
+    Description: Priority of the Lambda in ALB
+
+  ALBStackName:
+    Type: String
+    Description: Stack Name of the ALB
+
+  VPCID:
+    Type: String
+    Description: VPC ID in which ALB will be connected to
+
   Subnets:
-    Type: List<AWS::EC2::Subnet::Id>
-  VpcId:
-      Type: AWS::EC2::VPC::Id
+    Type: String
+    Description: Comma separated subnet IDs
+
+  VPCEndpointSG:
+    Type: String
+    Description: Security Group of VPC endpoint
+
+  UserPoolID:
+    Type: String
+    Description: User Pool Id of Cognito
+
+  ClientID:
+    Type: String
+    Description: Client Id of Cognito
+
+  ClientSecret:
+    Type: String
+    Description: Client Secret of Cognito
+
+
 
 Resources:
-
-  myFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: index.handler
-      # ...
-      # all the other properties here
-      # ...
-
-  myLoadBalancer:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    Properties:
-      Scheme: internet-facing
-      Subnets: !Ref Subnets
-      SecurityGroups: [!Ref mySecurityGroup]
-
-  myTargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    DependsOn: myLambdaPermission
-    Properties:
-      TargetType: lambda
-      Targets:
-        - Id: !GetAtt myFunction.Arn
-
-  myHttpListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      LoadBalancerArn: !Ref myLoadBalancer
-      Port: 80
-      Protocol: HTTP
-      DefaultActions:
-        - TargetGroupArn: !Ref myTargetGroup
-          Type: forward
-
-  mySecurityGroup:
+  UserManagementLambdaSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow http on port 80
-      VpcId: !Ref VpcId
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
+      GroupDescription: "Attached to lambda to connect to VPC"
+      GroupName: "UserManagementFunction Lambda Security Group"
+      VpcId: !Ref VPCID
 
-  myLambdaPermission:
+  UserManagementFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: Cognito-Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "cognito-idp:*"
+                Resource: "*"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+
+  UserManagementFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: User-Management-Service-Handler
+      Description: This Lambda serves as a backend API for Cognito user management service
+      CodeUri: .
+      Handler: UserManagementService.handle_request
+      Runtime: python3.13
+      Architectures:
+        - arm64
+      Timeout: 30
+      Role: !Ref UserManagementFunctionRole
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref UserManagementLambdaSG
+          - !Ref VPCEndpointSG
+        SubnetIds: !Split [ ",", !Ref Subnets]
+      MemorySize: 128
+      Environment:
+        Variables:
+          CLIENT_SECRET: !Ref UserPoolID
+          CLIENT_ID: !Ref ClientID
+          USER_POOL_ID: !Ref ClientSecret
+
+  UserManagementFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !GetAtt myFunction.Arn
+      FunctionName: !GetAtt UserManagementFunction.Arn
       Action: lambda:InvokeFunction
       Principal: elasticloadbalancing.amazonaws.com
 
-Outputs:
-  DNSName:
-    Value: !GetAtt myLoadBalancer.DNSName
+  UserManagementTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: UserManagementFunctionPermission
+    Properties:
+      TargetType: lambda
+      Targets:
+        - Id: !GetAtt UserManagementFunction.Arn
+
+  UserManagementServiceListener:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          ForwardConfig:
+            TargetGroups:
+              - TargetGroupArn: !Ref UserManagementTargetGroup
+                Weight: 100
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
+            Values:
+              - "/users/*"
+      ListenerArn:
+        Fn::ImportValue: !Sub ${ALBStackName}-ALB-Listener-Port443
+      Priority: !Ref Priority
+

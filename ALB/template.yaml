@@ -18,8 +18,8 @@ Parameters:
 
   VPCEndpointSG:
     Type: String
-    Description: Timeout of the ALB requests
-    Default: 60
+    Description: VPC Endpoint SG
+    Default: ""
 
   RequestTimeOut:
     Type: Number
@@ -43,6 +43,7 @@ Conditions:
   IsVPCProvided:  !Not [!Equals ["", !Ref VPCID]]
   IsPublic: !Equals ["internet-facing", !Ref ALBType]
   IsPrivate: !Not [Condition: IsPublic]
+  HasVPCEndpointSG: !Not [!Equals ["", VPCEndpointGS]]
 
 Resources:
   ALBWebSG:
@@ -95,6 +96,10 @@ Resources:
       Scheme: !Ref ALBType
       SecurityGroups:
         - !Ref ALBWebSG
+        - !If
+          - HasVPCEndpointSG
+          - !Ref VPCEndpointSG
+          - !Ref AWS::NoValue
       Subnets: !Split [ ",", !Ref Subnets]
       Type: application
       LoadBalancerAttributes:

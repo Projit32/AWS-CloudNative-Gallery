@@ -1,2 +1,0 @@
-class DuplicateRouteException(ValueError):
-    pass
