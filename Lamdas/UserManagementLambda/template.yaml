@@ -3,24 +3,12 @@ Transform: AWS::Serverless-2016-10-31
 
 Parameters:
   Priority:
-    Type: String
+    Type: Number
     Description: Priority of the Lambda in ALB
 
   ALBStackName:
     Type: String
     Description: Stack Name of the ALB
-
-  VPCID:
-    Type: String
-    Description: VPC ID in which ALB will be connected to
-
-  Subnets:
-    Type: String
-    Description: Comma separated subnet IDs
-
-  VPCEndpointSG:
-    Type: String
-    Description: Security Group of VPC endpoint
 
   UserPoolID:
     Type: String
@@ -35,15 +23,7 @@ Parameters:
     Description: Client Secret of Cognito
 
 
-
 Resources:
-  UserManagementLambdaSG:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: "Attached to lambda to connect to VPC"
-      GroupName: "UserManagementFunction Lambda Security Group"
-      VpcId: !Ref VPCID
-
   UserManagementFunctionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -80,19 +60,14 @@ Resources:
       Runtime: python3.13
       Architectures:
         - arm64
-      Timeout: 30
-      Role: !Ref UserManagementFunctionRole
-      VpcConfig:
-        SecurityGroupIds:
-          - !Ref UserManagementLambdaSG
-          - !Ref VPCEndpointSG
-        SubnetIds: !Split [ ",", !Ref Subnets]
+      Timeout: 10
+      Role: !GetAtt UserManagementFunctionRole.Arn
       MemorySize: 128
       Environment:
         Variables:
-          CLIENT_SECRET: !Ref UserPoolID
+          CLIENT_SECRET: !Ref ClientSecret
           CLIENT_ID: !Ref ClientID
-          USER_POOL_ID: !Ref ClientSecret
+          USER_POOL_ID: !Ref UserPoolID
 
   UserManagementFunctionPermission:
     Type: AWS::Lambda::Permission
@@ -124,6 +99,6 @@ Resources:
             Values:
               - "/users/*"
       ListenerArn:
-        Fn::ImportValue: !Sub ${ALBStackName}-ALB-Listener-Port443
+        Fn::ImportValue: !Sub ${ALBStackName}-ALB-Listener-Port80
       Priority: !Ref Priority
 

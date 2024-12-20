@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
-Description: Fargate based ECS Task Definition to deploy applications in a single container
+Description: Application Load Balancer to handle multiple application requests
 
 Parameters:
   StackName:
@@ -38,6 +38,14 @@ Parameters:
     Type: String
     Description: ARN of SSL certificate
     Default: ""
+
+  DomainName:
+    Type: String
+    Description: Name of the Domain
+
+  HostedZoneId:
+    Type: String
+    Description: Hosted Zone ID
 
 Conditions:
   IsVPCProvided:  !Not [!Equals ["", !Ref VPCID]]
@@ -120,7 +128,7 @@ Resources:
       Port: 443
       Protocol: "HTTPS"
       Certificates:
-        - !Ref SSLCertificateARN
+        - CertificateArn: !Ref SSLCertificateARN
       DefaultActions:
         - Type: fixed-response
           FixedResponseConfig:
@@ -181,11 +189,12 @@ Resources:
 
   DNSRouteRecord:
     Type: AWS::Route53::RecordSetGroup
+    Condition: IsPublic
     Properties:
-      HostedZoneId:
+      HostedZoneId: !Ref HostedZoneId
       Comment: Zone apex alias targeted to ALB LoadBalancer.
       RecordSets:
-        - Name: example.com.
+        - Name: !Ref DomainName
           Type: A
           AliasTarget:
             HostedZoneId: !GetAtt ApplicationLoadBalancer.CanonicalHostedZoneID
@@ -196,7 +205,7 @@ Resources:
 Outputs:
   Port443ListenerARN:
     Condition: IsPublic
-    Description: ARN of port 3000
+    Description: ARN of port 443
     Value: !Ref Port443Listener
     Export:
       Name: !Sub ${StackName}-ALB-Listener-Port443

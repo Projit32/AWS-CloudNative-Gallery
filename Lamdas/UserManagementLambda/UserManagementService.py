@@ -89,19 +89,6 @@ def confirm_forgot_password(event, request):
         Password=password,
     )
 
-@router.register_route(methods=["POST"], path="/users/initiate-auth")
-def initiate_auth(client, username, password):
-    secret_hash = get_secret_hash(username)
-    return client.admin_initiate_auth(
-        UserPoolId=USER_POOL_ID,
-        ClientId=CLIENT_ID,
-        AuthFlow='ADMIN_USER_PASSWORD_AUTH',
-        AuthParameters={
-            'USERNAME': username,
-            'SECRET_HASH': secret_hash,
-            'PASSWORD': password,
-        })
-
 @router.register_route(methods=["POST"], path="/users/login")
 def login(event, request):
     
@@ -111,7 +98,18 @@ def login(event, request):
                     "success": False,
                     "message": f"{field} is required",
                     "data": None}
-    return initiate_auth(client, event["username"], event["password"])
+
+    secret_hash = get_secret_hash(event["username"])
+    print("Loggin in...")
+    return client.admin_initiate_auth(
+        UserPoolId=USER_POOL_ID,
+        ClientId=CLIENT_ID,
+        AuthFlow='ADMIN_USER_PASSWORD_AUTH',
+        AuthParameters={
+            'USERNAME': event["username"],
+            'SECRET_HASH': secret_hash,
+            'PASSWORD': event["password"],
+        })
 
 
 
@@ -119,6 +117,7 @@ def login(event, request):
 def get_user(event, request):
     return client.get_user(AccessToken=event["AccessToken"])
 
+@router.register_route(methods=["POST"], path="/users/logout")
 def logout(event, request):
     return client.revoke_token(
         Token=event["RefreshToken"],

@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
-Description: Template for all VPC endpopints
+Description: Template for all VPC endpoints
 
 Parameters:
   VpcId:
@@ -40,27 +40,3 @@ Resources:
         PrivateDnsEnabled: true
         SecurityGroupIds:
           - !Ref VPCEndpointSecurityGroup
-
-    CWEndpoint:
-      Type: "AWS::EC2::VPCEndpoint"
-      Properties:
-        VpcEndpointType: "Interface"
-        VpcId: !Ref VpcId
-        ServiceName: !Sub "com.amazonaws.${AWS::Region}.logs"
-        PolicyDocument: |
-          {
-            "Statement": [
-              {
-                "Action": "*", 
-                "Effect": "Allow", 
-                "Principal": "*", 
-                "Resource": "*"
-              }
-            ]
-          }
-        SubnetIds:
-          - !Split [ ",", !Ref Subnets ]
-        PrivateDnsEnabled: true
-        SecurityGroupIds:
-          - !Ref VPCEndpointSecurityGroup
-
