@@ -6,4 +6,4 @@ s3_prefix = "application-cluster"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
-parameter_overrides = "ClusterName=\"application-cluster\" FargateRequired=\"true\" FargateBase=1 FargateWeight=1 FargateSpotRequired=\"false\" FargateSpotBase=1 FargateSpotWeight=1"
+parameter_overrides = "ClusterName=\"application-cluster\" FargateRequired=\"true\" FargateBase=0 FargateWeight=1 FargateSpotRequired=\"true\" FargateSpotBase=1 FargateSpotWeight=2"

@@ -115,13 +115,50 @@ Resources:
           ToPort: -1
           CidrIp: 0.0.0.0/0
 
+  ApplicationServiceSPOT:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ClusterName
+      ServiceName: !Sub ${AppName}-Service-SPOT
+      DesiredCount: !Ref ServiceDesiredCount
+      CapacityProviderStrategy:
+        - Base: 1
+          CapacityProvider: FARGATE_SPOT
+          Weight: 1
+      DeploymentConfiguration:
+        MaximumPercent: !Ref DCMaxPercent
+        MinimumHealthyPercent: !Ref DCMinPercent
+      DeploymentController:
+        Type: ECS
+      HealthCheckGracePeriodSeconds: !Ref HealthCheckGracePeriodSeconds
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - !Ref ServiceSG
+            - !If
+              - IsVPCEndpointSGProvided
+              - !Ref VPCEndpointSG
+              - !Ref AWS::NoValue
+          Subnets: !Split [",", !Ref Subnets]
+      LoadBalancers:
+        - ContainerName: !Ref ContainerName
+          ContainerPort: !Ref IngressPort
+          TargetGroupArn: !Ref ServiceTargetGroup
+      SchedulingStrategy: REPLICA
+      TaskDefinition: !Sub ${TaskDefinationName}:${TaskDefinationRevision}
+      PlatformVersion: LATEST
+
   ApplicationService:
     Type: AWS::ECS::Service
     Properties:
       Cluster: !Ref ClusterName
+      CapacityProviderStrategy:
+        - Base: 1
+          CapacityProvider: FARGATE_SPOT
+          Weight: 1
       ServiceName: !Sub ${AppName}-Service
-      DesiredCount: !Ref ServiceDesiredCount
-      LaunchType: FARGATE
+      DesiredCount: 0
       DeploymentConfiguration:
         MaximumPercent: !Ref DCMaxPercent
         MinimumHealthyPercent: !Ref DCMinPercent
