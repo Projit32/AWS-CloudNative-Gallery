@@ -22,23 +22,17 @@ Parameters:
 
 
 Resources:
-  CWLogsEndpoint:
-    Type: "AWS::EC2::VPCEndpoint"
+
+  CloudWatchLogsVPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
     Properties:
-        VpcEndpointType: "Interface"
-        VpcId: !Ref VpcId
-        ServiceName: !Sub "com.amazonaws.${AWS::Region}.logs"
-        PolicyDocument:
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Principal: '*'
-              Action: "*"
-              Resource: "*"
-        SubnetIds: !Split [ ",", !Ref Subnets]
-        PrivateDnsEnabled: true
-        SecurityGroupIds:
-          - !Ref VPCEndpointSecurityGroup
+      VpcId: !Ref VpcId
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.logs'
+      VpcEndpointType: Interface
+      SubnetIds: !Split [ ",", !Ref Subnets]
+      SecurityGroupIds:
+        - !Ref VPCEndpointSecurityGroup
+      PrivateDnsEnabled: true
 
   DynamoDBEndpoint:
     Type: AWS::EC2::VPCEndpoint

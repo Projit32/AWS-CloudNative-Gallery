@@ -24,6 +24,6 @@ Resources:
       ValidationMethod: DNS
 
 Outputs:
-  S3BucketName:
+  CertificateARN:
     Description: Certificate ARN
     Value: !Ref TLSCertificate

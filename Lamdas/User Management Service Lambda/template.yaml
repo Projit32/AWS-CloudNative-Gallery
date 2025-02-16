@@ -69,6 +69,12 @@ Resources:
           CLIENT_ID: !Ref ClientID
           USER_POOL_ID: !Ref UserPoolID
 
+  CloudwatchLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      LogGroupName: /aws/lambda/UserManagementFunction
+      RetentionInDays: 7
+
   UserManagementFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:

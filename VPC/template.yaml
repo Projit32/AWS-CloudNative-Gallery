@@ -332,7 +332,7 @@ Resources:
   VPCEndpointSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow users to connect to the ALB
+      GroupDescription: Security Group for VPC endpoint
       GroupName: !Sub ${VPCName}-VPC-Endpoint-SG
       VpcId: !Ref PubPrivateVPC
 
@@ -340,7 +340,7 @@ Resources:
     DependsOn: VPCEndpointSG
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow users to connect to the ALB
+      GroupDescription: Allow users to connect to the VPC Endpoint
       GroupName: !Sub ${VPCName}-VPC-Endpoint-Consumer-SG
       VpcId: !Ref PubPrivateVPC
       SecurityGroupEgress:
