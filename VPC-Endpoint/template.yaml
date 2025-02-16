@@ -144,3 +144,14 @@ Resources:
       SecurityGroupIds:
         - !Ref VPCEndpointSecurityGroup
       SubnetIds: !Split [ ",", !Ref Subnets]
+
+  ECRDKREndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref VPCEndpointSecurityGroup
+      SubnetIds: !Split [ ",", !Ref Subnets ]

@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: S3 Bucket for application
+
+Parameters:
+  RepoName:
+    Description: Name for ECR repo
+    Type: String
+
+Resources:
+  ECRRepo:
+    Type: AWS::ECR::Repository
+    Properties:
+      EmptyOnDelete: false
+      RepositoryName: !Sub ${RepoName}-repository
+      ImageScanningConfiguration:
+        ScanOnPush: true
