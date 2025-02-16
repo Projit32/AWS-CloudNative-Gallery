@@ -1,0 +1,10 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "fargate-service-lambda"
+resolve_s3 = true
+s3_prefix = "fargate-service-lambda"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
+parameter_overrides = "VpcId=\"vpc-0acbeb1e2e182ff4e\" Subnets=\"subnet-0402373082f530ce9,subnet-016a28cbd590cf438,subnet-0e58380e648683333,subnet-0f8e8c86747c4474d,subnet-093cfcb970cd175f4,subnet-0443f0db23a09eb24\" VPCEndpointSecurityGroupIds=\"sg-0fab6d9e179111973\""
+

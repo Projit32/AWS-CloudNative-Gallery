@@ -1,0 +1,173 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for Lambda function in VPC triggered by EventBridge ECS events'
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC ID where the Lambda function will run
+
+  VPCEndpointSecurityGroupIds:
+    Type: String
+    Description: VPC Endpoint Security Group
+
+  Subnets:
+    Type: String
+    Description: Comma Separated Subnets
+
+Resources:
+  # IAM Role for Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ECS-Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecs:*
+                Resource: '*'
+        - PolicyName: Event-bridge-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - events:*
+                Resource: '*'
+        - PolicyName: lambda-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:*
+                Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:ECSServiceHandlerFunction
+
+  # Lambda Function
+  ECSServiceHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ECSServiceHandlerFunction
+      Handler: FargateServiceHandler.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      CodeUri: .
+      Architectures:
+        - arm64
+      Environment:
+        Variables:
+          FUNCTION_NAME: ECSServiceHandlerFunction
+      Runtime: python3.13
+      Timeout: 300
+      MemorySize: 128
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref VPCEndpointSecurityGroupIds
+        SubnetIds: !Split [",", !Ref Subnets]
+
+  CloudwatchLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      LogGroupName: /aws/lambda/ECSServiceHandlerFunction
+      RetentionInDays: 7
+
+  # EventBridge Rule
+  ECSEventServiceInterruptionRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Rule to capture ECS events
+      State: ENABLED
+      EventPattern:
+        source:
+          - aws.ecs
+        detail-type:
+          - ECS Task State Change
+        details:
+          capacityProviderName:
+            - FARGATE_SPOT
+          desiredStatus:
+            - STOPPED
+          stopCode:
+            - SpotInterruption
+      Targets:
+        - Arn: !GetAtt ECSServiceHandlerFunction.Arn
+          Id: LambdaTarget
+
+  ECSEventServiceFailedRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Rule to capture ECS events
+      State: ENABLED
+      EventPattern:
+        source:
+          - aws.ecs
+        detail-type:
+          - ECS Task State Change
+        details:
+          capacityProviderName:
+            - FARGATE_SPOT
+          eventName:
+            - SERVICE_TASK_PLACEMENT_FAILURE
+          reason:
+            - "RESOURCE:FARGATE"
+      Targets:
+        - Arn: !GetAtt ECSServiceHandlerFunction.Arn
+          Id: LambdaTarget
+
+  ECSEventSPOTServiceStartedRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Rule to capture ECS events
+      State: ENABLED
+      EventPattern:
+        source:
+          - aws.ecs
+        detail-type:
+          - ECS Task State Change
+        details:
+          capacityProviderName:
+            - FARGATE_SPOT
+          lastStatus:
+            - RUNNING
+          desiredStatus:
+            - RUNNING
+      Targets:
+        - Arn: !GetAtt ECSServiceHandlerFunction.Arn
+          Id: LambdaTarget
+
+  # Lambda Permission for EventBridge
+  LambdaPermission1:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ECSServiceHandlerFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ECSEventServiceInterruptionRule.Arn
+
+  LambdaPermission2:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ECSServiceHandlerFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ECSEventServiceFailedRule.Arn
+
+  LambdaPermission3:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ECSServiceHandlerFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ECSEventSPOTServiceStartedRule.Arn
