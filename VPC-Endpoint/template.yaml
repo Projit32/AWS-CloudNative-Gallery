@@ -51,16 +51,16 @@ Resources:
               - 'dynamodb:*'
             Resource: '*'
 
-  ECSEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VpcId
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecs
-      VpcEndpointType: Interface
-      PrivateDnsEnabled: true
-      SecurityGroupIds:
-        - !Ref VPCEndpointSecurityGroup
-      SubnetIds: !Split [ ",", !Ref Subnets]
+#  ECSEndpoint:
+#    Type: AWS::EC2::VPCEndpoint
+#    Properties:
+#      VpcId: !Ref VpcId
+#      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecs
+#      VpcEndpointType: Interface
+#      PrivateDnsEnabled: true
+#      SecurityGroupIds:
+#        - !Ref VPCEndpointSecurityGroup
+#      SubnetIds: !Split [ ",", !Ref Subnets]
 
   S3Endpoint:
     Type: AWS::EC2::VPCEndpoint
@@ -79,79 +79,79 @@ Resources:
               - 's3:*'
             Resource: '*'
 
-  LambdaEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VpcId
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.lambda
-      VpcEndpointType: Interface
-      PrivateDnsEnabled: true
-      SecurityGroupIds:
-        - !Ref VPCEndpointSecurityGroup
-      SubnetIds: !Split [ ",", !Ref Subnets]
+#  LambdaEndpoint:
+#    Type: AWS::EC2::VPCEndpoint
+#    Properties:
+#      VpcId: !Ref VpcId
+#      ServiceName: !Sub com.amazonaws.${AWS::Region}.lambda
+#      VpcEndpointType: Interface
+#      PrivateDnsEnabled: true
+#      SecurityGroupIds:
+#        - !Ref VPCEndpointSecurityGroup
+#      SubnetIds: !Split [ ",", !Ref Subnets]
+#
+#  SQSEndpoint:
+#    Type: AWS::EC2::VPCEndpoint
+#    Properties:
+#      VpcId: !Ref VpcId
+#      ServiceName: !Sub com.amazonaws.${AWS::Region}.sqs
+#      VpcEndpointType: Interface
+#      PrivateDnsEnabled: true
+#      SecurityGroupIds:
+#        - !Ref VPCEndpointSecurityGroup
+#      SubnetIds: !Split [ ",", !Ref Subnets]
 
-  SQSEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VpcId
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.sqs
-      VpcEndpointType: Interface
-      PrivateDnsEnabled: true
-      SecurityGroupIds:
-        - !Ref VPCEndpointSecurityGroup
-      SubnetIds: !Split [ ",", !Ref Subnets]
-
-  EC2Endpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VpcId
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.ec2
-      VpcEndpointType: Interface
-      PrivateDnsEnabled: true
-      SecurityGroupIds:
-        - !Ref VPCEndpointSecurityGroup
-      SubnetIds: !Split [ ",", !Ref Subnets]
-
-  EventBridgeEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VpcId
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.events
-      VpcEndpointType: Interface
-      PrivateDnsEnabled: true
-      SecurityGroupIds:
-        - !Ref VPCEndpointSecurityGroup
-      SubnetIds: !Split [ ",", !Ref Subnets]
-
-  KinesisEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VpcId
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.kinesis-streams
-      VpcEndpointType: Interface
-      PrivateDnsEnabled: true
-      SecurityGroupIds:
-        - !Ref VPCEndpointSecurityGroup
-      SubnetIds: !Split [ ",", !Ref Subnets]
-
-  ECRAPIEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VpcId
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
-      VpcEndpointType: Interface
-      PrivateDnsEnabled: true
-      SecurityGroupIds:
-        - !Ref VPCEndpointSecurityGroup
-      SubnetIds: !Split [ ",", !Ref Subnets]
-
-  ECRDKREndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VpcId
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
-      VpcEndpointType: Interface
-      PrivateDnsEnabled: true
-      SecurityGroupIds:
-        - !Ref VPCEndpointSecurityGroup
-      SubnetIds: !Split [ ",", !Ref Subnets ]
+#  EC2Endpoint:
+#    Type: AWS::EC2::VPCEndpoint
+#    Properties:
+#      VpcId: !Ref VpcId
+#      ServiceName: !Sub com.amazonaws.${AWS::Region}.ec2
+#      VpcEndpointType: Interface
+#      PrivateDnsEnabled: true
+#      SecurityGroupIds:
+#        - !Ref VPCEndpointSecurityGroup
+#      SubnetIds: !Split [ ",", !Ref Subnets]
+#
+#  EventBridgeEndpoint:
+#    Type: AWS::EC2::VPCEndpoint
+#    Properties:
+#      VpcId: !Ref VpcId
+#      ServiceName: !Sub com.amazonaws.${AWS::Region}.events
+#      VpcEndpointType: Interface
+#      PrivateDnsEnabled: true
+#      SecurityGroupIds:
+#        - !Ref VPCEndpointSecurityGroup
+#      SubnetIds: !Split [ ",", !Ref Subnets]
+#
+#  KinesisEndpoint:
+#    Type: AWS::EC2::VPCEndpoint
+#    Properties:
+#      VpcId: !Ref VpcId
+#      ServiceName: !Sub com.amazonaws.${AWS::Region}.kinesis-streams
+#      VpcEndpointType: Interface
+#      PrivateDnsEnabled: true
+#      SecurityGroupIds:
+#        - !Ref VPCEndpointSecurityGroup
+#      SubnetIds: !Split [ ",", !Ref Subnets]
+#
+#  ECRAPIEndpoint:
+#    Type: AWS::EC2::VPCEndpoint
+#    Properties:
+#      VpcId: !Ref VpcId
+#      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
+#      VpcEndpointType: Interface
+#      PrivateDnsEnabled: true
+#      SecurityGroupIds:
+#        - !Ref VPCEndpointSecurityGroup
+#      SubnetIds: !Split [ ",", !Ref Subnets]
+#
+#  ECRDKREndpoint:
+#    Type: AWS::EC2::VPCEndpoint
+#    Properties:
+#      VpcId: !Ref VpcId
+#      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
+#      VpcEndpointType: Interface
+#      PrivateDnsEnabled: true
+#      SecurityGroupIds:
+#        - !Ref VPCEndpointSecurityGroup
+#      SubnetIds: !Split [ ",", !Ref Subnets ]
