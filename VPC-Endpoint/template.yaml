@@ -23,16 +23,16 @@ Parameters:
 
 Resources:
 
-  CloudWatchLogsVPCEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VpcId
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.logs'
-      VpcEndpointType: Interface
-      SubnetIds: !Split [ ",", !Ref Subnets]
-      SecurityGroupIds:
-        - !Ref VPCEndpointSecurityGroup
-      PrivateDnsEnabled: true
+#  CloudWatchLogsVPCEndpoint:
+#    Type: AWS::EC2::VPCEndpoint
+#    Properties:
+#      VpcId: !Ref VpcId
+#      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.logs'
+#      VpcEndpointType: Interface
+#      SubnetIds: !Split [ ",", !Ref Subnets]
+#      SecurityGroupIds:
+#        - !Ref VPCEndpointSecurityGroup
+#      PrivateDnsEnabled: true
 
   DynamoDBEndpoint:
     Type: AWS::EC2::VPCEndpoint

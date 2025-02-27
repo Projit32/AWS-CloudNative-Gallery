@@ -51,7 +51,7 @@ Conditions:
   IsVPCProvided:  !Not [!Equals ["", !Ref VPCID]]
   IsPublic: !Equals ["internet-facing", !Ref ALBType]
   IsPrivate: !Not [Condition: IsPublic]
-  HasVPCEndpointSG: !Not [!Equals ["", VPCEndpointGS]]
+  HasVPCEndpointSG: !Not [!Equals ["", VPCEndpointSG]]
 
 Resources:
   ALBWebSG:
