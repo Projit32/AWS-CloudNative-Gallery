@@ -13,6 +13,20 @@ Resources:
     DeletionPolicy: Retain
     Properties:
       BucketName: !Sub ${BucketName}-${AWS::Region}-${AWS::AccountId}
+      LifecycleConfiguration:
+        Rules:
+          - Id: TrashFolderLifecycleRule
+            Status: Enabled
+            Prefix: trash/
+            ExpirationInDays: 30
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 1
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+          - Id: TrashFolderDeleteMarkerRule
+            Status: Enabled
+            Prefix: trash/
+            ExpiredObjectDeleteMarker: true
 
 Outputs:
   S3BucketName:

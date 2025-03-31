@@ -8,16 +8,16 @@ Parameters:
     Description: Name of the bucket
 
 Resources:
-  MultimediaDBTable:
+  DBTable:
     Type: AWS::DynamoDB::Table
     Properties:
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         -
-          AttributeName: "imageName"
+          AttributeName: "objectName"
           AttributeType: "S"
         -
-          AttributeName: "pictureTimestamp"
+          AttributeName: "objectTimestamp"
           AttributeType: "S"
         -
           AttributeName: "userName"
@@ -27,18 +27,18 @@ Resources:
           AttributeName: "userName"
           KeyType: "HASH"
         -
-          AttributeName: "imageName"
+          AttributeName: "objectName"
           KeyType: "RANGE"
       TableName: !Ref MultimediaDBTableName
       LocalSecondaryIndexes:
         -
-          IndexName: "PictureTimeStampLSI"
+          IndexName: "TimeStampLSI"
           KeySchema:
             -
               AttributeName: "userName"
               KeyType: "HASH"
             -
-              AttributeName: "pictureTimestamp"
+              AttributeName: "objectTimestamp"
               KeyType: "RANGE"
           Projection:
             ProjectionType: "ALL"
