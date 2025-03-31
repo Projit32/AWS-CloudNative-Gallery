@@ -72,7 +72,7 @@ Resources:
   CloudwatchLogGroup:
     Type: 'AWS::Logs::LogGroup'
     Properties:
-      LogGroupName: /aws/lambda/User-Management-Service-Handler
+      LogGroupName: /aws/lambda/UserManagementFunction
       RetentionInDays: 7
 
   UserManagementFunctionPermission:

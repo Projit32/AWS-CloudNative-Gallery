@@ -1,0 +1,10 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "multimedia-preprocessor-lambda"
+resolve_s3 = true
+s3_prefix = "multimedia-preprocessor-lambda"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
+parameter_overrides = "S3BucketName=\"gallery-bucket-us-east-1-704678691702\" DynamoTableName=\"multimedia-datastore\""
+

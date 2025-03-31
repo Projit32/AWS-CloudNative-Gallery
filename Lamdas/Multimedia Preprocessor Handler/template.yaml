@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for Lambda function in VPC triggered by EventBridge ECS events'
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  S3BucketName:
+    Type: String
+    Description: Name of the existing S3 bucket that will trigger the Lambda function\
+
+  DynamoTableName:
+    Type: String
+    Description: Name of the DynamoDB Table
+
+Resources:
+  # IAM Role for Lambda
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                  - 's3:ListBucket'
+                Resource:
+                  - !Sub 'arn:aws:s3:::${S3BucketName}'
+                  - !Sub 'arn:aws:s3:::${S3BucketName}/*'
+        - PolicyName: SDynamoAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:PutIterm'
+                Resource:
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:${DynamoTableName}'
+
+  CloudwatchLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      LogGroupName: /aws/lambda/Multimedia-Preprocessor-Handler
+      RetentionInDays: 7
+
+  S3EventLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: Multimedia-Preprocessor-Handler
+      Handler: MultimediaPreprocessorHandler.handler
+      CodeUri: .
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python3.13
+      Architectures:
+        - arm64
+      Timeout: 120
+      MemorySize: 128
+      Environment:
+        Variables:
+          MULTIMEDIA_TABLE_NAME: !Ref DynamoTableName
+
+
+    # Lambda Permission to allow S3 to invoke the function
+  LambdaPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref S3EventLambda
+      Principal: 's3.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:s3:::${S3BucketName}'
+      SourceAccount: !Ref 'AWS::AccountId'

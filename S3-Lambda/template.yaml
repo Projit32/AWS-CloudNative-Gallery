@@ -6,6 +6,9 @@ Parameters:
   BucketName:
     Type: String
     Description: Name of the bucket
+  NotificationLambda:
+    Type: String
+    Description: Name of the lambda to be triggered on object creation
 
 Resources:
   S3Bucket:
@@ -27,6 +30,10 @@ Resources:
             Status: Enabled
             Prefix: trash/
             ExpiredObjectDeleteMarker: true
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: 's3:ObjectCreated:*'
+            Function: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${NotificationLambda}
 
 Outputs:
   S3BucketName:

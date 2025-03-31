@@ -1,0 +1,10 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "gallery-multimedia-lambda"
+resolve_s3 = true
+s3_prefix = "gallery-multimedia-lambda"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
+parameter_overrides = "Priority=1 ALBStackName=\"Application-Public\" UserPoolID=\"us-east-1_9OpsGcspV\" ClientID=\"7fm30v2755jsbqhfgi0k1cjn3d\" ClientSecret=\"1q79cjmkbelqhssm6cljncjmfuabtslakffvuigppa1t78jluenu\""
+
