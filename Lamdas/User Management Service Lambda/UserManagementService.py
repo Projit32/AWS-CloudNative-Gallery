@@ -25,7 +25,7 @@ def get_secret_hash(username):
     return d2
 
 @router.register_route(methods=["POST"], path="/users/sign-up")
-def sign_up(event, request):
+def sign_up(event, headers, request):
     for field in ["username", "email", "password",]:
         if not event.get(field):
             return {"error": False, "success": True, 'message': f"{field} is not present", "data": None}
@@ -46,7 +46,7 @@ def sign_up(event, request):
 
 
 @router.register_route(methods=["POST"], path="/users/confirm-sign-up")
-def confirm_signup(event, request):
+def confirm_signup(event, headers, request):
     username = event['username']
     code = event['code']
     return client.confirm_sign_up(
@@ -58,7 +58,7 @@ def confirm_signup(event, request):
     )
 
 @router.register_route(methods=["POST"], path="/users/resend-verification-code")
-def resend_verification(event, request):
+def resend_verification(event, headers, request):
     username = event['username']
     return client.resend_confirmation_code(
         ClientId=CLIENT_ID,
@@ -67,7 +67,7 @@ def resend_verification(event, request):
     )
 
 @router.register_route(methods=["POST"], path="/users/forgot-password")
-def forgot_password(event, request):
+def forgot_password(event, headers, request):
     username = event['username']
     return client.forgot_password(
         ClientId=CLIENT_ID,
@@ -77,7 +77,7 @@ def forgot_password(event, request):
     )
 
 @router.register_route(methods=["POST"], path="/users/confirm-forgot-password")
-def confirm_forgot_password(event, request):
+def confirm_forgot_password(event, headers, request):
     username = event['username']
     password = event['password']
     code = event['code']
@@ -90,7 +90,7 @@ def confirm_forgot_password(event, request):
     )
 
 @router.register_route(methods=["POST"], path="/users/login")
-def login(event, request):
+def login(event, headers, request):
     
     for field in ["username", "password"]:
         if event.get(field) is None:
@@ -114,11 +114,11 @@ def login(event, request):
 
 
 @router.register_route(methods=["POST"], path="/users/forgot")
-def get_user(event, request):
+def get_user(event, headers, request):
     return client.get_user(AccessToken=event["AccessToken"])
 
 @router.register_route(methods=["POST"], path="/users/logout")
-def logout(event, request):
+def logout(event, headers, request):
     return client.revoke_token(
         Token=event["RefreshToken"],
         ClientId=CLIENT_ID,
@@ -126,7 +126,7 @@ def logout(event, request):
     )
 
 @router.register_route(methods=["POST"], path="/users/refresh-token")
-def refresh_login(event, request):
+def refresh_login(event, headers, request):
     secret_hash = get_secret_hash(event["username"])
     return client.admin_initiate_auth(
         UserPoolId=USER_POOL_ID,
