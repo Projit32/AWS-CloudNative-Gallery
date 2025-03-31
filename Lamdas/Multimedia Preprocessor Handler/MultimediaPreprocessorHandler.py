@@ -4,7 +4,7 @@ import json
 import urllib.parse
 import boto3
 from pymediainfo import MediaInfo
-
+os.environ["MULTIMEDIA_TABLE_NAME"] = "multimedia-datastore"
 table = boto3.resource('dynamodb').Table(os.getenv("MULTIMEDIA_TABLE_NAME"))
 s3 = boto3.client('s3')
 def get_file_type(file_path: str) -> tuple[str | None, str | None]:
@@ -28,7 +28,7 @@ def dump_into_database(data: dict, info:dict, meta_data:dict):
     table.put_item(Item={
         "userName": data['username'],
         "objectName": data['objectName'],
-        "objectTimestamp": data["objectTimestamp "],
+        "objectTimestamp": data["objectTimestamp"],
         "info": info,
         "metadata": meta_data
     })
@@ -55,6 +55,12 @@ def handler(event, context):
 
     url = get_signed_url(bucket, key)
 
-    info, metadata = get_info(url)
+    metadata, info = get_info(url)
+    print(info, metadata)
+    data = {
+        "username" : "projit32",
+        "objectName": key.split("/")[-1],
+        "objectTimestamp": info['`file_last_modification_date']
+    }
 
-
+    dump_into_database(data, info, metadata)
