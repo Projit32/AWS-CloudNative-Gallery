@@ -3,6 +3,7 @@ import mimetypes
 import json
 import urllib.parse
 import boto3
+from datetime import datetime
 from pymediainfo import MediaInfo
 
 os.environ["MULTIMEDIA_TABLE_NAME"] = "multimedia-datastore"
@@ -33,6 +34,7 @@ def dump_into_database(data: dict, info:dict, meta_data:dict):
         "info": info,
         "metadata": meta_data
     })
+    print("Data Inserted in DB")
 
 def get_signed_url(bucket: str, obj: str, expires_in=300):
     """
@@ -65,7 +67,6 @@ def handler(event, context):
     data = {
         "username" : "projit32",
         "objectName": key.split("/")[-1],
-        "objectTimestamp": object_metadata['last-modified-datetime']
+        "objectTimestamp": datetime.fromisoformat(object_metadata['last-modified-datetime'].replace(" UTC", "Z")).isoformat(timespec='milliseconds')
     }
-
     dump_into_database(data, info, metadata)
