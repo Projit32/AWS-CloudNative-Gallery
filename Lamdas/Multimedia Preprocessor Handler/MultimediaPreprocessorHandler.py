@@ -5,6 +5,7 @@ import urllib.parse
 import boto3
 from datetime import datetime
 from pymediainfo import MediaInfo
+from decimal import Decimal
 
 os.environ["MULTIMEDIA_TABLE_NAME"] = "multimedia-datastore"
 table = boto3.resource('dynamodb').Table(os.getenv("MULTIMEDIA_TABLE_NAME"))
@@ -67,6 +68,6 @@ def handler(event, context):
     data = {
         "username" : "projit32",
         "objectName": key.split("/")[-1],
-        "objectTimestamp": datetime.fromisoformat(object_metadata['last-modified-datetime'].replace(" UTC", "Z")).timestamp()
+        "objectTimestamp": Decimal(datetime.fromisoformat(object_metadata['last-modified-datetime'].replace(" UTC", "Z")).timestamp())
     }
     dump_into_database(data, info, metadata)
