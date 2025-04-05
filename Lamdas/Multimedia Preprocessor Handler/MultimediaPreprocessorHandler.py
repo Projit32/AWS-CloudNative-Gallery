@@ -4,6 +4,7 @@ import json
 import urllib.parse
 import boto3
 from pymediainfo import MediaInfo
+
 os.environ["MULTIMEDIA_TABLE_NAME"] = "multimedia-datastore"
 table = boto3.resource('dynamodb').Table(os.getenv("MULTIMEDIA_TABLE_NAME"))
 s3 = boto3.client('s3')
@@ -56,11 +57,15 @@ def handler(event, context):
     url = get_signed_url(bucket, key)
 
     metadata, info = get_info(url)
-    print(info, metadata)
+    print("Object Info: ", info, "Object Metadata", metadata)
+
+    object_metadata = s3.head_object(Bucket=bucket, Key=key).get("Metadata")
+    print("S3 Object metadata: ",object_metadata)
+
     data = {
         "username" : "projit32",
         "objectName": key.split("/")[-1],
-        "objectTimestamp": info['`file_last_modification_date']
+        "objectTimestamp": object_metadata['last-modified-datetime']
     }
 
     dump_into_database(data, info, metadata)
