@@ -18,7 +18,7 @@ Resources:
           AttributeType: "S"
         -
           AttributeName: "objectTimestamp"
-          AttributeType: "S"
+          AttributeType: "N"
         -
           AttributeName: "userName"
           AttributeType: "S"
