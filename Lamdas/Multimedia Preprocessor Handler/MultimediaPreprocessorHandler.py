@@ -67,6 +67,6 @@ def handler(event, context):
     data = {
         "username" : "projit32",
         "objectName": key.split("/")[-1],
-        "objectTimestamp": datetime.fromisoformat(object_metadata['last-modified-datetime'].replace(" UTC", "Z")).isoformat(timespec='milliseconds')
+        "objectTimestamp": datetime.fromisoformat(object_metadata['last-modified-datetime'].replace(" UTC", "Z")).timestamp()
     }
     dump_into_database(data, info, metadata)
