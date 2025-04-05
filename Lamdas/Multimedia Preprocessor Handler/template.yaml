@@ -44,9 +44,9 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - 'dynamodb:PutIterm'
+                  - 'dynamodb:PutItem'
                 Resource:
-                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:${DynamoTableName}'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoTableName}'
 
   CloudwatchLogGroup:
     Type: 'AWS::Logs::LogGroup'
