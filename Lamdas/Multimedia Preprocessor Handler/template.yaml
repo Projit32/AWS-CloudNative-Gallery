@@ -66,6 +66,9 @@ Resources:
         - arm64
       Timeout: 120
       MemorySize: 128
+      ReservedConcurrentExecutions: 3
+      EventInvokeConfig:
+        MaximumRetryAttempts: 0
       Environment:
         Variables:
           MULTIMEDIA_TABLE_NAME: !Ref DynamoTableName
