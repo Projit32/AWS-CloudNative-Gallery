@@ -66,7 +66,7 @@ def handler(event, context):
     print("S3 Object metadata: ",object_metadata)
 
     data = {
-        "username" : "projit32",
+        "username" : key.split("/")[0],
         "objectName": key.split("/")[-1],
         "objectTimestamp": Decimal(datetime.fromisoformat(object_metadata['last-modified-datetime'].replace(" UTC", "Z")).timestamp())
     }
