@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  Architectures:
+    Type: String
+    Description: Comma Separated Architectures
+
+  Runtimes:
+    Type: String
+    Description: Comma Separated Runtimes
+
+  S3BucketLocation:
+    Type: String
+    Description: Which S3 bucket is the zip present
+
+  S3KeyPath:
+    Type: String
+    Description: Object path of the Zip
+
+  LayerName:
+    Type: String
+    Description: Name of the Layer
+
+  LayerVersion:
+    Type: String
+    Description: Version of the Layer
+
+Resources:
+
+  LambdaLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      CompatibleArchitectures: !Split [",", !Ref Architectures]
+      CompatibleRuntimes: !Split [",", !Ref Runtimes]
+      Content:
+        S3Bucket: !Ref S3BucketLocation
+        S3Key: !Ref S3KeyPath
+      Description: !Sub ${LayerName}-${LayerVersion}
+      LayerName: !Ref LayerName

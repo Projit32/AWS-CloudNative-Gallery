@@ -100,7 +100,6 @@ def login(event, headers, request):
                     "data": None}
 
     secret_hash = get_secret_hash(event["username"])
-    print("Loggin in...")
     return client.admin_initiate_auth(
         UserPoolId=USER_POOL_ID,
         ClientId=CLIENT_ID,

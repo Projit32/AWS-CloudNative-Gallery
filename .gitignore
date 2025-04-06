@@ -185,3 +185,4 @@ fabric.properties
 .idea/*
 *.aws-sam
 *.aws-sam/*
+.idea
