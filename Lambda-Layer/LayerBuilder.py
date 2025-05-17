@@ -20,8 +20,8 @@ def delete_file(file_path):
 
 if __name__ == "__main__":
 
-   source = "G:\\image-gallery-aws\\Lambda-Layer\\API registry Layer\\src\\"
-   zip_path = "G:\\image-gallery-aws\\Lambda-Layer\\APIRegistryLayer"
+   source = "./API registry Layer/src/"
+   zip_path = "./APIRegistryLayer"
    zip_folder_with_shutil(source, zip_path)
    upload_file_to_s3(zip_path+".zip", "aws-sam-cli-managed-default-samclisourcebucket-zkhbofflf4v1", "layer/ApiRegistry.zip")
    remove(zip_path+".zip")

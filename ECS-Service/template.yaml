@@ -155,7 +155,7 @@ Resources:
       Cluster: !Ref ClusterName
       CapacityProviderStrategy:
         - Base: 1
-          CapacityProvider: FARGATE_SPOT
+          CapacityProvider: FARGATE
           Weight: 1
       ServiceName: !Sub ${AppName}-Service
       DesiredCount: 0

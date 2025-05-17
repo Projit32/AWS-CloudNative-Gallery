@@ -44,7 +44,11 @@ Resources:
             ExpiredObjectDeleteMarker: true
       NotificationConfiguration:
         LambdaConfigurations:
-          - Event: 's3:ObjectCreated:*'
+          - Event: 's3:ObjectCreated:Put'
+            Function: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${NotificationLambda}
+          - Event: 's3:ObjectCreated:Post'
+            Function: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${NotificationLambda}
+          - Event: 's3:ObjectCreated:CompleteMultipartUpload'
             Function: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${NotificationLambda}
 
 Outputs:

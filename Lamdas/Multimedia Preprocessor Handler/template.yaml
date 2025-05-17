@@ -5,7 +5,7 @@ Transform: AWS::Serverless-2016-10-31
 Parameters:
   S3BucketName:
     Type: String
-    Description: Name of the existing S3 bucket that will trigger the Lambda function\
+    Description: Name of the existing S3 bucket that will trigger the Lambda function
 
   DynamoTableName:
     Type: String
@@ -36,8 +36,8 @@ Resources:
                   - 's3:GetObject'
                   - 's3:ListBucket'
                 Resource:
-                  - !Sub 'arn:aws:s3:::${S3BucketName}'
-                  - !Sub 'arn:aws:s3:::${S3BucketName}/*'
+                  - !Sub 'arn:aws:s3:::${S3BucketName}-${AWS::Region}-${AWS::AccountId}'
+                  - !Sub 'arn:aws:s3:::${S3BucketName}-${AWS::Region}-${AWS::AccountId}/*'
         - PolicyName: SDynamoAccessPolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -81,5 +81,5 @@ Resources:
       Action: 'lambda:InvokeFunction'
       FunctionName: !Ref S3EventLambda
       Principal: 's3.amazonaws.com'
-      SourceArn: !Sub 'arn:aws:s3:::${S3BucketName}'
+      SourceArn: !Sub 'arn:aws:s3:::${S3BucketName}-${AWS::Region}-${AWS::AccountId}'
       SourceAccount: !Ref 'AWS::AccountId'

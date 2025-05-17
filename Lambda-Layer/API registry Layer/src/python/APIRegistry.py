@@ -64,7 +64,7 @@ class APIRouteRegistry:
             if body and event.get("isBase64Encoded"):
                 body = base64.b64decode(body)
             if cls.routes.get(event["httpMethod"]).get(event["path"]):
-                response = cls.routes.get(event["httpMethod"]).get(event["path"])(json.loads(body), headers, event)
+                response = cls.routes.get(event["httpMethod"]).get(event["path"])(json.loads(body) if body else None, headers, event)
             else:
                 raise APIResourceNotFoundException("Resource "+event["httpMethod"]+" - "+event["path"]+" is not a registered route", uuid.uuid4())
             return {

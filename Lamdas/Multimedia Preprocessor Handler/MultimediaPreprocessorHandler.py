@@ -3,7 +3,7 @@ import mimetypes
 import json
 import urllib.parse
 import boto3
-from datetime import datetime
+from datetime import datetime, timezone
 from pymediainfo import MediaInfo
 from decimal import Decimal
 
@@ -29,9 +29,7 @@ def get_info(path:str) -> (dict, dict):
 
 def dump_into_database(data: dict, info:dict, meta_data:dict):
     table.put_item(Item={
-        "userName": data['username'],
-        "objectName": data['objectName'],
-        "objectTimestamp": data["objectTimestamp"],
+        **data,
         "info": info,
         "metadata": meta_data
     })
@@ -66,8 +64,12 @@ def handler(event, context):
     print("S3 Object metadata: ",object_metadata)
 
     data = {
-        "username" : key.split("/")[0],
+        "userName" : key.split("/")[0],
         "objectName": key.split("/")[-1],
-        "objectTimestamp": Decimal(datetime.fromisoformat(object_metadata['last-modified-datetime'].replace(" UTC", "Z")).timestamp())
+        "s3Path": key,
+        "uploadedTimestamp": Decimal(datetime.now(timezone.utc).timestamp()),
+        "objectTimestamp": Decimal(datetime.fromisoformat(object_metadata['last-modified-datetime'].replace(" UTC", "Z")).timestamp()),
+        "isArchived": False,
+        "isTrashed": False
     }
     dump_into_database(data, info, metadata)
