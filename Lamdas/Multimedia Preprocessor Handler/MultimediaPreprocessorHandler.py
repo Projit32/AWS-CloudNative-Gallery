@@ -4,10 +4,9 @@ import json
 import urllib.parse
 import boto3
 from datetime import datetime, timezone
-from pymediainfo import MediaInfo
+from libs.pymediainfo import MediaInfo
 from decimal import Decimal
 
-os.environ["MULTIMEDIA_TABLE_NAME"] = "multimedia-datastore"
 table = boto3.resource('dynamodb').Table(os.getenv("MULTIMEDIA_TABLE_NAME"))
 s3 = boto3.client('s3')
 def get_file_type(file_path: str) -> tuple[str | None, str | None]:

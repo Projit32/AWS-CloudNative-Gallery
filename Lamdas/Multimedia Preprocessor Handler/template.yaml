@@ -11,6 +11,10 @@ Parameters:
     Type: String
     Description: Name of the DynamoDB Table
 
+  LayerArns:
+    Type: String
+    Description: comma separated Lambda layers arns
+
 Resources:
   # IAM Role for Lambda
   LambdaExecutionRole:
@@ -61,9 +65,9 @@ Resources:
       Handler: MultimediaPreprocessorHandler.handler
       CodeUri: .
       Role: !GetAtt LambdaExecutionRole.Arn
-      Runtime: python3.13
+      Runtime: python3.12
       Architectures:
-        - arm64
+        - x86_64
       Timeout: 120
       MemorySize: 128
       ReservedConcurrentExecutions: 3
@@ -72,6 +76,7 @@ Resources:
       Environment:
         Variables:
           MULTIMEDIA_TABLE_NAME: !Ref DynamoTableName
+      Layers: !Split [",", !Ref LayerArns]
 
 
     # Lambda Permission to allow S3 to invoke the function
