@@ -69,6 +69,7 @@ def handler(event, context):
         "uploadedTimestamp": Decimal(datetime.now(timezone.utc).timestamp()),
         "objectTimestamp": Decimal(datetime.fromisoformat(object_metadata['last-modified-datetime'].replace(" UTC", "Z")).timestamp()),
         "isArchived": False,
-        "isTrashed": False
+        "isTrashed": False,
+        "isFavorite": False
     }
     dump_into_database(data, info, metadata)
