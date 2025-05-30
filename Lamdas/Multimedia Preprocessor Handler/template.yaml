@@ -11,10 +11,6 @@ Parameters:
     Type: String
     Description: Name of the DynamoDB Table
 
-  LayerArns:
-    Type: String
-    Description: comma separated Lambda layers arns
-
 Resources:
   # IAM Role for Lambda
   LambdaExecutionRole:
@@ -76,7 +72,6 @@ Resources:
       Environment:
         Variables:
           MULTIMEDIA_TABLE_NAME: !Ref DynamoTableName
-      Layers: !Split [",", !Ref LayerArns]
 
 
     # Lambda Permission to allow S3 to invoke the function
