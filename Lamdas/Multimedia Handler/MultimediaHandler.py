@@ -21,8 +21,9 @@ s3_bucket = os.getenv("BUCKET_NAME")
 @router.register_route(methods=["GET"], path="/multimedia")
 def list_media(body, header, request):
     user = "projit32" #figure this out
-    archive_search = request.get("queryStringParameters", {}).get("in", "").lower() == "archive"
+    archive_search = request.get("queryStringParameters", {}).get("in", "").lower() == "archives"
     trash_search = request.get("queryStringParameters", {}).get("in", "").lower() == "trash"
+    favorite_search = request.get("queryStringParameters", {}).get("in", "").lower() == "favorites"
     pagination_key = request.get("queryStringParameters", {}).get("page_id", None)
     query = {"IndexName":"TimeStampLSI",
                            "Select":"SPECIFIC_ATTRIBUTES",
@@ -30,7 +31,7 @@ def list_media(body, header, request):
                            "ProjectionExpression":"userName,objectName,s3Path",
                            "ScanIndexForward" :False,
                            "KeyConditionExpression":Key('userName').eq(user),
-                           "FilterExpression": Attr('isTrashed').eq(trash_search) & Attr('isArchived').eq(archive_search)}
+                           "FilterExpression": Attr('isTrashed').eq(trash_search) & Attr('isArchived').eq(archive_search) & Attr('isFavorite').eq(favorite_search)}
 
     if pagination_key:
         query['ExclusiveStartKey'] = json.loads(base64.b64decode(pagination_key.encode('utf-8')).decode('utf-8'))
@@ -72,9 +73,7 @@ def insert_media(body, header, request):
     return body
 
 
-
-
-@router.register_route(methods=["PUT"], path="/multimedia/archive")
+@router.register_route(methods=["PATCH"], path="/multimedia/favorite")
 def archive_objects(body, header, request):
     user = "projit32"  # figure this out
     objects = body.get("items")
@@ -89,22 +88,47 @@ def archive_objects(body, header, request):
     })
 
     for item in response:
-        destination_s3_path = user+"/archive/"+item.get("objectName")
-        move_s3_object(source_key=item.get("s3Path"), destination_key=destination_s3_path)
         table.update_item(
             Key ={
                 "userName": user,
                 "objectName": item.get("objectName")
             },
-            UpdateExpression = 'SET isArchived = :val1 , s3Path = :val2',
+            UpdateExpression = 'SET isArchived = :val2, isTrashed = :val2, isFavorite = :val1',
             ExpressionAttributeValues = {
                 ":val1": True,
-                ":val2": destination_s3_path
+                ":val2": False
+            }
+        )
+
+@router.register_route(methods=["PATCH"], path="/multimedia/archive")
+def archive_objects(body, header, request):
+    user = "projit32"  # figure this out
+    objects = body.get("items")
+
+    response = query_table({
+        "Select":"SPECIFIC_ATTRIBUTES",
+        "IndexName":"TimeStampLSI",
+        "ScanIndexForward":False,
+        "ProjectionExpression":"userName,objectName,s3Path,isArchived,isTrashed",
+        "KeyConditionExpression":Key('userName').eq(user),
+        "FilterExpression":Attr('objectName').is_in(objects)
+    })
+
+    for item in response:
+        table.update_item(
+            Key ={
+                "userName": user,
+                "objectName": item.get("objectName")
+            },
+            UpdateExpression = 'SET isArchived = :val1, isTrashed = :val2, isFavorite = :val2',
+            ExpressionAttributeValues = {
+                ":val1": True,
+                ":val2": False
             }
         )
 
 
-@router.register_route(methods=["PUT"], path="/multimedia/restore")
+@router.register_route(methods=["PATCH"], path="/multimedia/restore")
 def restore_location(body, header, request):
     user = "projit32"  # figure this out
     objects = body.get("items")
@@ -119,22 +143,32 @@ def restore_location(body, header, request):
     })
 
     for item in response:
-        destination_s3_path = user+"/timeline/"+item.get("objectName")
-        move_s3_object(source_key=item.get("s3Path"), destination_key=destination_s3_path)
         table.update_item(
             Key ={
                 "userName": user,
                 "objectName": item.get("objectName")
             },
-            UpdateExpression = 'SET isArchived = :val1, isTrashed = :val1, s3Path = :val2, expiry = :val3',
+            UpdateExpression = 'SET isArchived = :val1, isTrashed = :val1, isFavorite = :val1, expiry = :val2',
             ExpressionAttributeValues = {
                 ":val1": False,
-                ":val2": destination_s3_path,
-                ":val3": Decimal(0)
+                ":val2": Decimal(0)
             }
         )
 
 @router.register_route(methods=["DELETE"], path="/multimedia")
+def delete_object(body, header, request):
+    user = "projit32"  # figure this out
+    objects = body.get("items")
+
+    for item in objects:
+        table.delete_item(
+            Key={
+                "userName": user,
+                "objectName": item
+            }
+        )
+
+@router.register_route(methods=["PATCH"], path="/multimedia/trash")
 def delete_object(body, header, request):
     user = "projit32"  # figure this out
     objects = body.get("items")
@@ -149,25 +183,14 @@ def delete_object(body, header, request):
     expiration_time = int((datetime.now() + timedelta(days=30)).timestamp())
 
     for item in response:
-        destination_s3_path = user + "/trash/" + item.get("objectName")
-        move_s3_object(source_key=item.get("s3Path"), destination_key=destination_s3_path)
         table.update_item(
             Key={
                 "userName": user,
                 "objectName": item.get("objectName")
             },
-            UpdateExpression="SET isTrashed=:val1,s3Path=:val2,expiry=:val3",
-            ExpressionAttributeValues={":val1": True, ":val2":  destination_s3_path,":val3":expiration_time}
+            UpdateExpression="SET isArchived = :val1, isTrashed = :val2, isFavorite = :val1, expiry=:val3",
+            ExpressionAttributeValues={":val1": False, ":val2": True,  ":val3":expiration_time}
         )
-
-def move_s3_object(source_key:str, destination_key:str):
-    print("copying ", source_key, " --> ", destination_key)
-    s3_resource.Object(s3_bucket, destination_key).copy({
-        'Bucket': s3_bucket,
-        'Key': source_key
-    })
-
-    s3_resource.Object(s3_bucket, source_key).delete()
 
 
 def query_table(query_params:dict):
